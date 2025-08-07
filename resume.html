@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Jean-Baptiste Bonvarlet Resume - Business Analyst and Strategic Consultant">
+    <title>Resume - Jean-Baptiste Bonvarlet</title>
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest"> <!-- Optional -->
+    <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+    
+    <!-- External Libraries -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <div class="header-container">
+            <div class="logo">
+    <a href="index.html">Jean-Baptiste Bonvarlet</a>
+</div>
+            
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <nav>
+                <ul class="nav-links" id="navLinks">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="portfolio.html" class="nav-link">Portfolio</a></li>
+                <li><a href="resume.html" class="nav-link active">Resume</a></li>
+                <li><a href="hobbies.html" class="nav-link">Hobbies</a></li>
+            </ul>
+            </nav>
+
+            <!-- Right: Contact Icons -->
+        <div class="header-contact">
+            <a href="mailto:bonvarletjeanbaptiste@gmail.com" title="Email">
+                <i class="fas fa-envelope"></i>
+            </a>
+            <a href="tel:+17373576266" title="Phone">
+                <i class="fas fa-phone"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/jean-baptiste-bonvarlet/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+                <i class="fab fa-linkedin"></i>
+            </a>
+        </div>
+        
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <h1 class="section-title" data-aos="fade-up">Resume</h1>
+
+                <!-- Download Buttons -->
+                <div class="resume-buttons">
+                    <a href="./assets/Jean-Baptiste-Bonvarlet-Resume.pdf" class="resume-btn" download>
+                        <i class="fas fa-download"></i>
+                        Download Full Resume
+                    </a>
+                    <a href="https://www.linkedin.com/in/jean-baptiste-bonvarlet/" class="resume-btn" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-linkedin"></i>
+                        LinkedIn Profile
+                    </a>
+                </div>
+            </div>
+
+            <!-- Embedded PDF -->
+<div class="pdf-container" data-aos="fade-up">
+    <div class="pdf-wrapper">
+        <iframe 
+            src="./assets/Jean-Baptiste-Bonvarlet-Resume.pdf" 
+            title="Jean-Baptiste Bonvarlet Resume PDF"
+            type="application/pdf">
+            <p>Your browser does not support PDFs. 
+               <a href="./assets/Jean-Baptiste-Bonvarlet-Resume.pdf">Download the PDF</a> instead.
+            </p>
+        </iframe>
+    </div>
+</div>
+    </main>
+
+    <!-- Footer -->
+<!-- Footer -->
+    <footer style="background: #2C3E50; color: white; text-align: center; padding: 2rem; margin-top: 4rem;">
+        <p>&copy; 2025 Jean-Baptiste Bonvarlet. All rights reserved.</p>
+    </footer>
+
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+
+        // Mobile menu toggle
+        function toggleMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navLinks = document.getElementById('navLinks');
+            const menuToggle = document.querySelector('.menu-toggle');
+            
+            if (!navLinks.contains(event.target) && !menuToggle.contains(event.target)) {
+                navLinks.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
