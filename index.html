@@ -1,204 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Jean-Baptiste Bonvarlet - Business Analyst and Strategic Consultant Portfolio">
-    <title>Homepage - Jean-Baptiste Bonvarlet</title>
-    
-    <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
-    <link rel="manifest" href="assets/site.webmanifest"> <!-- Optional -->
-    <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
-    
-    <!-- External Libraries -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
-    
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jean Baptiste Bonvarlet — Home</title>
+  <meta name="description" content="Marketing Specialist. SEO and growth focused. Portfolio and resume." />
+
+  <!-- Google Fonts: Playfair Display (titles), Lato (body), Bebas Neue (logo), Roboto (logo text) -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&family=Bebas+Neue&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <!-- Your CSS -->
+  <link href="assets/css/style.css" rel="stylesheet" />
 </head>
 <body>
-    <!-- Header -->
-    <header id="header">
-    <div class="header-container">
-        <!-- Left: Logo -->
-        <div class="logo">
-    <a href="index.html">Jean-Baptiste Bonvarlet</a>
-</div>
-        
-        <!-- Center: Navigation -->
-        <nav>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="index.html" class="nav-link active">Home</a></li>
-                <li><a href="portfolio.html" class="nav-link">Portfolio</a></li>
-                <li><a href="resume.html" class="nav-link">Resume</a></li>
-                <li><a href="hobbies.html" class="nav-link">Hobbies</a></li>
-            </ul>
-        </nav>
-        
-        <!-- Right: Contact Icons -->
-        <div class="header-contact">
-            <a href="mailto:bonvarletjeanbaptiste@gmail.com" title="Email">
-                <i class="fas fa-envelope"></i>
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#"><img src="assets/img/logo.png" alt="Jean Baptiste Bonvarlet logo" height="48" /></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="#home"><span class="lang-en">Home</span><span class="lang-fr">Accueil</span></a></li>
+          <li class="nav-item"><a class="nav-link" href="portfolio.html"><span class="lang-en">Portfolio</span><span class="lang-fr">Portfolio</span></a></li>
+          <li class="nav-item"><a class="nav-link" href="resume.html"><span class="lang-en">Resume</span><span class="lang-fr">CV</span></a></li>
+          <li class="nav-item"><a class="nav-link" href="hobbies.html"><span class="lang-en">Hobbies</span><span class="lang-fr">Loisirs</span></a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-primary" id="btnEN" aria-pressed="true">EN</button>
+          <button class="btn btn-sm btn-outline-primary" id="btnFR" aria-pressed="false">FR</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SIMPLE HERO -->
+  <header id="home" class="hero py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 text-center text-lg-start">
+          <h1 class="display-5 fw-bold mb-2">
+            <span class="lang-en">Welcome to my personal website.</span>
+            <span class="lang-fr">Bienvenue sur mon site personnel.</span>
+          </h1>
+          <p class="lead text-muted mb-4">
+            <span class="lang-en">I developed this website to showcase my skills in HTML/CSS and to present my portfolio.</span>
+            <span class="lang-fr">J’ai développé ce site pour présenter mes compétences en HTML/CSS et mon portfolio.</span>
+          </p>
+          <div class="mb-4">
+            <a href="portfolio.html" class="btn btn-primary">
+              <span class="lang-en">See portfolio</span>
+              <span class="lang-fr">Voir le portfolio</span>
             </a>
-            <a href="tel:+17373576266" title="Phone">
-                <i class="fas fa-phone"></i>
-            </a>
-            <a href="https://www.linkedin.com/in/jean-baptiste-bonvarlet/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
-                <i class="fab fa-linkedin"></i>
-            </a>
+          </div>
+          <img src="assets/img/portrait.jpg" class="hero-img img-fluid rounded-4 shadow-sm" alt="Portrait of Jean Baptiste Bonvarlet" loading="eager" />
         </div>
-        
-        <!-- Mobile Menu Toggle -->
-        <div class="menu-toggle" onclick="toggleMenu()">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
+      </div>
     </div>
-</header>
+  </header>
 
-    <!-- Main Content -->
-    <main>
-
-        <div class="container">
-            <!-- About Me Section -->
-<section class="about-section" data-aos="fade-up">
-    <div class="about-content">
-        <div class="about-photo">
-            <img src="assets/jb-profile.jpg" alt="Jean-Baptiste Bonvarlet Headshot">
+  <!-- FOOTER -->
+  <footer class="py-3">
+    <div class="container">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <div class="small">© 2025 Jean Baptiste Bonvarlet</div>
         </div>
-        <div class="about-text">
-            <h2>About Me</h2>
-            <p>Bilingual in French and English MSc + MA graduate with practical experience in digital strategy, market positioning, and go-to-market execution. Proven ability to lead cross-functional teams, drive data-informed engagement growth, and support client-facing initiatives with measurable business impact. OPT eligible and prepared to contribute to strategic consulting teams.</p>
+        <div class="col-md-6">
+          <ul class="nav justify-content-md-end small">
+            <li class="nav-item"><a href="#home" class="nav-link px-2"><span class="lang-en">Home</span><span class="lang-fr">Accueil</span></a></li>
+            <li class="nav-item"><a href="portfolio.html" class="nav-link px-2"><span class="lang-en">Portfolio</span><span class="lang-fr">Portfolio</span></a></li>
+            <li class="nav-item"><a href="resume.html" class="nav-link px-2"><span class="lang-en">Resume</span><span class="lang-fr">CV</span></a></li>
+            <li class="nav-item"><a href="hobbies.html" class="nav-link px-2"><span class="lang-en">Hobbies</span><span class="lang-fr">Loisirs</span></a></li>
+            <li class="nav-item"><a href="contact.html" class="nav-link px-2"><span class="lang-en">Contact me</span><span class="lang-fr">Contact</span></a></li>
+            <li class="nav-item"><a href="privacy.html" class="nav-link px-2"><span class="lang-en">Privacy</span><span class="lang-fr">Confidentialité</span></a></li>
+          </ul>
         </div>
+      </div>
     </div>
-</section>
+  </footer>
 
-            <!-- Featured Projects Section -->
-            <!-- Featured Projects Section -->
-<section data-aos="fade-up">
-    <h2 class="section-title">Featured Projects</h2>
-    <div class="card-grid">
-        <div class="project-card">
-            <div class="project-banner">Fintech</div>
-            <div class="project-content">
-                <h3 class="project-title">WiseStrat</h3>
-                <span class="project-type">Personal</span>
-                <p class="project-summary">WiseStrat is an innovative fintech startup that harnesses the power of 118 specialized AI agents to provide comprehensive stock market investment guidance. Our platform offers a complete suite of advanced analytical tools and proven strategies designed to consistently outperform the S&P 500.</p>
-            </div>
-        </div>
-
-        <div class="project-card">
-            <div class="project-banner">E-commerce Platform</div>
-            <div class="project-content">
-                <h3 class="project-title">My Tahiti Shop</h3>
-                <span class="project-type">Personal</span>
-                <p class="project-summary">A Shopify store selling hand-picked Tahitian products to customers in France and the USA. Features private collections sourced directly from local Tahitian producers, offering authentic island products that showcase Tahiti's natural beauty and culture.</p>
-            </div>
-        </div>
-
-        <div class="project-card">
-            <div class="project-banner">Social Media Manager</div>
-            <div class="project-content">
-                <h3 class="project-title">Texas State University</h3>
-                <span class="project-type">Academic</span>
-                <p class="project-summary">Assessing the communication situation, defining the strategy and implementing it, then monitoring real results to reach the targeted audience in order to promote the university environmental department through social media accounts, Instagram and Facebook for 2 different accounts.</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Single button for all projects -->
-    <div class="section-cta">
-        <a href="portfolio.html" class="main-portfolio-btn">View Complete Portfolio</a>
-    </div>
-</section>
-
-            <!-- Quick Resume Section -->
-            <section data-aos="fade-up">
-                <h2 class="section-title">Professional Background</h2>
-                <div class="resume-container">
-                    <p>Download my complete resume or view my professional profile on LinkedIn.</p>
-                    <div class="resume-buttons">
-                        <a href="./assets/Jean-Baptiste-Bonvarlet-Resume.pdf" class="resume-btn" download>
-                            <i class="fas fa-download"></i>
-                            Download Resume
-                        </a>
-                        <a href="https://www.linkedin.com/in/jean-baptiste-bonvarlet/" class="resume-btn" target="_blank" rel="noopener noreferrer">
-                            <i class="fab fa-linkedin"></i>
-                            View LinkedIn
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            <!-- My Interests Section -->
-<section data-aos="fade-up">
-    <h2 class="section-title">My Interests</h2>
-    <div class="hobby-grid">
-        <div class="hobby-card" onclick="window.location.href='hobbies.html'">
-            <div class="hobby-icon"><i class="fas fa-running"></i></div>
-            <h3 class="hobby-title">Triathlon Training</h3>
-            <p>Endurance sports with measurable health improvements and semi-marathon goals</p>
-        </div>
-        <div class="hobby-card" onclick="window.location.href='hobbies.html'">
-            <div class="hobby-icon"><i class="fas fa-gamepad"></i></div>
-            <h3 class="hobby-title">Strategic Gaming</h3>
-            <p>Competitive multiplayer and RTS games developing teamwork and leadership skills</p>
-        </div>
-        <div class="hobby-card" onclick="window.location.href='hobbies.html'">
-            <div class="hobby-icon"><i class="fas fa-chart-line"></i></div>
-            <h3 class="hobby-title">Financial Trading</h3>
-            <p>Multi-asset trading with 15% portfolio growth over 3 years</p>
-        </div>
-    </div>
-</section>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer style="background: #2C3E50; color: white; text-align: center; padding: 2rem; margin-top: 4rem;">
-        <p>&copy; 2025 Jean-Baptiste Bonvarlet. All rights reserved.</p>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script>
-        // Initialize AOS
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
-        });
-
-        // Mobile menu toggle
-        function toggleMenu() {
-            const navLinks = document.getElementById('navLinks');
-            navLinks.classList.toggle('active');
-        }
-
-        // Header scroll effect
-        window.addEventListener('scroll', function() {
-            const header = document.getElementById('header');
-            if (window.scrollY > 50) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const navLinks = document.getElementById('navLinks');
-            const menuToggle = document.querySelector('.menu-toggle');
-            
-            if (!navLinks.contains(event.target) && !menuToggle.contains(event.target)) {
-                navLinks.classList.remove('active');
-            }
-        });
-    </script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>
