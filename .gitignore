@@ -7,3 +7,10 @@ dist/
 .env.production
 .preview/
 research/data/
+
+# Secrets — never commit. JEV_API_KEY lives in a shell env var,
+# an untracked .env, or a GitHub Actions secret.
+.env.*
+!.env.example
+*.key
+secrets.json
