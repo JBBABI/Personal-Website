@@ -113,14 +113,18 @@ export const questions = [
   {
     id: 'topic_harness',
     type: 'noul',
-    version: 1,
-    // The term the field uses for the scaffolding around the model. It showed
-    // up in two papers of the seed cluster and repeatedly in the first fetch,
-    // which is why it is a facet rather than a keyword search.
+    version: 2,
+    // v1 put 17 of 40 in the review band — more unsure than confident. It
+    // described the harness broadly enough that any paper with an agent in it
+    // half-matched. v2 adds the distinction that was missing: designing or
+    // improving the harness, versus merely using one to do something else.
+    // Nearly every agent paper has a harness; few are ABOUT it.
     claim:
-      'This paper is about the harness or scaffolding around a model — the ' +
-      'external system mediating how an agent perceives and acts, including ' +
-      'its action space, context construction or control loop.',
+      'Designing, improving or studying the harness itself is a main ' +
+      'contribution of this paper — the code around the model that builds its ' +
+      'prompts, defines its action space, routes its tools or runs its control ' +
+      'loop. Merely using a harness to accomplish some other task does not ' +
+      'count.',
     thresholds: { low: 0.3, high: 0.7 },
   },
   {
@@ -146,10 +150,15 @@ export const questions = [
   {
     id: 'topic_tool_use',
     type: 'noul',
-    version: 1,
+    version: 2,
+    // Same failure as harness at v1: 10 of 40 unsure, because almost every
+    // agent calls a tool at some point. The subject/instrument distinction is
+    // what makes it answerable.
     claim:
-      'This paper is about agents calling tools, APIs or external systems, ' +
-      'including tool selection, tool interfaces and protocols such as MCP.',
+      'How the agent calls tools is a subject of this paper — tool selection, ' +
+      'tool interface design, protocols such as MCP, or handling tool errors ' +
+      'and outputs. An agent that simply happens to use tools while doing ' +
+      'something else does not count.',
     thresholds: { low: 0.3, high: 0.7 },
   },
   {

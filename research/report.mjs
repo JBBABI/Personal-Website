@@ -62,13 +62,15 @@ for (const p of shown) {
   const code = d.releases_code ?? {};
   const tags = topicsOf(d);
   const unsure = TOPICS.filter((t) => d[`topic_${t}`]?.verdict === 'review');
+  const asked = TOPICS.some((t) => d[`topic_${t}`] !== undefined);
 
   console.log(`\n${p.title}`);
   console.log(`  ${p.url}  ${p.published}`);
   console.log(`  relevant  ${bar(rel.probability)} ${String(rel.probability ?? '?').padEnd(5)} ${rel.verdict ?? ''}`);
   console.log(`  type      ${String(type.choice ?? '?').padEnd(10)} @${type.confidence ?? '?'} ${type.verdict === 'review' ? 'REVIEW' : ''}`);
   console.log(`  code      ${bar(code.probability)} ${String(code.probability ?? '?').padEnd(5)} ${code.verdict ?? ''}`);
-  console.log(`  topics    ${tags.length ? tags.join(' · ') : '(none)'}${unsure.length ? `   unsure: ${unsure.join(' ')}` : ''}`);
+  const topicLine = !asked ? 'not asked yet' : tags.length ? tags.join(' · ') : 'none';
+  console.log(`  topics    ${topicLine}${unsure.length ? `   unsure: ${unsure.join(' ')}` : ''}`);
 }
 
 /* The distributions matter more than any single row: they say whether the
@@ -92,13 +94,27 @@ console.log('');
 for (const t of TOPICS) {
   const c = counts(`topic_${t}`);
   const yes = c.yes ?? 0;
-  const pct = papers.length ? Math.round((yes / papers.length) * 100) : 0;
-  console.log(`  topic ${t.padEnd(12)} ${String(yes).padStart(3)}/${papers.length}  ${String(pct).padStart(3)}%  ${JSON.stringify(c)}`);
+  const review = c.review ?? 0;
+  // Percentages are of papers actually ASKED, not of the whole file, or every
+  // rate is diluted by papers that predate the question.
+  const answered = papers.length - (c.missing ?? 0);
+  const pct = answered ? Math.round((yes / answered) * 100) : 0;
+  const reviewPct = answered ? Math.round((review / answered) * 100) : 0;
+  // A review rate this high means the claim is ambiguous, not that the papers
+  // are borderline — it is the signal that a question needs rewording.
+  const flag = reviewPct >= 25 ? '  ← claim too vague' : '';
+  console.log(
+    `  topic ${t.padEnd(12)} ${String(yes).padStart(3)}/${String(answered).padEnd(3)} ${String(pct).padStart(3)}% yes` +
+    `   ${String(reviewPct).padStart(3)}% unsure${flag}`);
 }
 
-const untagged = papers.filter((p) => topicsOf(p.decisions).length === 0).length;
-const multi = papers.filter((p) => topicsOf(p.decisions).length > 1).length;
-console.log(`\n  ${untagged} papers carry no topic, ${multi} carry more than one`);
+const asked = papers.filter((p) => TOPICS.some((t) => p.decisions[`topic_${t}`] !== undefined));
+const untagged = asked.filter((p) => topicsOf(p.decisions).length === 0).length;
+const multi = asked.filter((p) => topicsOf(p.decisions).length > 1).length;
+console.log(`\n  of ${asked.length} papers asked about topics: ${untagged} carry none, ${multi} carry more than one`);
+if (papers.length > asked.length) {
+  console.log(`  ${papers.length - asked.length} classified before topics existed — re-run classify to fill them in`);
+}
 
 const types = papers.reduce((acc, p) => {
   const c = p.decisions.contribution_type?.choice;
