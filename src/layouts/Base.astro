@@ -6,8 +6,8 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { useTranslations, localePath, type Lang } from '../i18n/ui';
 
-interface Props { lang: Lang; path?: string; }
-const { lang, path = '/' } = Astro.props;
+interface Props { lang: Lang; path?: string; noindex?: boolean; }
+const { lang, path = '/', noindex = false } = Astro.props;
 const t = useTranslations(lang);
 
 const site = Astro.site ?? new URL('https://jeanbaptistebonvarlet.com');
@@ -24,10 +24,16 @@ const ogImage = new URL('/img/og.png', site).href;
     <title>{t('meta.title')}</title>
     <meta name="description" content={t('meta.description')} />
 
-    <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="en" href={altEn} />
-    <link rel="alternate" hreflang="fr" href={altFr} />
-    <link rel="alternate" hreflang="x-default" href={altEn} />
+    {noindex ? (
+      <meta name="robots" content="noindex, follow" />
+    ) : (
+      <Fragment>
+        <link rel="canonical" href={canonical} />
+        <link rel="alternate" hreflang="en" href={altEn} />
+        <link rel="alternate" hreflang="fr" href={altFr} />
+        <link rel="alternate" hreflang="x-default" href={altEn} />
+      </Fragment>
+    )}
 
     <link rel="icon" href="/favicon.png" type="image/png" />
     <meta name="theme-color" content="#0B0B0C" media="(prefers-color-scheme: dark)" />
