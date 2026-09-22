@@ -1,0 +1,57 @@
+name: Research — fetch arXiv
+
+# Runs on a GitHub runner because that has open internet. Triggers on push to
+# this branch so the first run needs no setup, plus manual dispatch later.
+on:
+  push:
+    branches: [research-pipeline]
+    paths:
+      - 'research/**'
+      - '.github/workflows/research-fetch.yml'
+  workflow_dispatch:
+    inputs:
+      max:
+        description: 'Maximum papers to fetch'
+        default: '200'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch candidates from arXiv
+        run: node research/fetch-arxiv.mjs --max "${{ inputs.max || '200' }}"
+
+      - name: Summarise what came back
+        run: |
+          echo "## arXiv fetch" >> "$GITHUB_STEP_SUMMARY"
+          node -e '
+            const p = require("./research/data/papers.json");
+            console.log("TOTAL:", p.length);
+            const years = {};
+            for (const x of p) years[x.published.slice(0,7)] = (years[x.published.slice(0,7)]||0)+1;
+            console.log("\nBY MONTH:");
+            for (const [m,n] of Object.entries(years).sort().reverse().slice(0,12))
+              console.log("  " + m + "  " + n);
+            console.log("\nFIRST 25 TITLES:");
+            p.slice(0,25).forEach((x,i) =>
+              console.log(`  ${String(i+1).padStart(2)}. [${x.arxiv_id}] ${x.title.slice(0,95)}`));
+            const cats = {};
+            for (const x of p) for (const c of x.categories) cats[c] = (cats[c]||0)+1;
+            console.log("\nTOP CATEGORIES:");
+            Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,10)
+              .forEach(([c,n]) => console.log("  " + c + "  " + n));
+          ' | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: papers
+          path: research/data/papers.json
+          retention-days: 30
