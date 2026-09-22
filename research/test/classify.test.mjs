@@ -19,7 +19,7 @@ await writeFile(DATA, JSON.stringify([
     categories: ['cs.SE'], comment: '',
     decisions: {
       is_relevant:       { version: 1, probability: 0.91, verdict: 'yes' },
-      contribution_type: { version: 1, choice: 'empirical study', confidence: 0.8, verdict: 'ok' },
+      contribution_type: { version: 2, choice: 'study', confidence: 0.8, verdict: 'ok' },
       releases_code:     { version: 1, probability: 0.1,  verdict: 'no' },
     } },
 ], null, 2));
@@ -29,16 +29,19 @@ globalThis.fetch = async (url, opts) => {
   const body = JSON.parse(opts.body);
   sent.push(body);
   assert.equal(opts.headers.Authorization, 'Bearer test-key');
-  assert.ok(!('published' in body.state), 'dates excluded — Jev is weak at them');
-  assert.ok(!('authors' in body.state), 'authors excluded from the decision state');
+  assert.equal(body.model, 'jev-1.13.0', 'model id sent');
+  assert.equal(typeof body.state, 'string', 'state is text, per the API');
+  assert.ok(!/published|2026-0/.test(body.state), 'dates excluded — Jev is weak at them');
+  assert.ok(!/authors/i.test(body.state), 'authors excluded from the decision state');
+  assert.ok(!Array.isArray(body.questions), 'questions is an object keyed by id, not an array');
   return {
     ok: true, status: 200,
     json: async () => ({ answers: {
       // Mid-band on purpose: must be routed to review, not silently guessed.
-      is_relevant:       { probability: 0.55 },
-      contribution_type: { choice: 'position or vision', confidence: 0.41,
-                           probabilities: { 'position or vision': 0.41 } },
-      releases_code:     { probability: 0.95 },
+      is_relevant:       { type: 'noul', noul: 0.55, confidence: 0.6 },
+      contribution_type: { type: 'choice', choice: 'position', confidence: 0.41,
+                           probabilities: { position: 0.41, method: 0.3 } },
+      releases_code:     { type: 'noul', noul: 0.95, confidence: 0.93 },
     } }),
   };
 };
@@ -49,10 +52,11 @@ await import('../classify-jev.mjs');
 await new Promise((r) => setTimeout(r, 400));
 
 assert.equal(sent.length, 1, 'only the unclassified paper was sent — caching holds');
-assert.equal(sent[0].questions.length, 3);
-assert.equal(sent[0].questions[0].type, 'noul');
-assert.ok(sent[0].questions[0].claim, 'nouls carry a claim');
-assert.ok(sent[0].questions[1].options.includes('none of these'), 'choice has an escape option');
+assert.equal(Object.keys(sent[0].questions).length, 3);
+assert.equal(sent[0].questions.is_relevant.type, 'noul');
+assert.ok(sent[0].questions.is_relevant.instructions, 'nouls carry instructions');
+assert.ok(sent[0].questions.contribution_type.criteria.other,
+  'choice criteria include an escape option');
 
 const out = JSON.parse(await readFile(DATA, 'utf8'));
 const p = out.find((x) => x.arxiv_id === '2606.05608');
@@ -61,6 +65,7 @@ assert.equal(p.decisions.is_relevant.probability, 0.55, 'probability stored, not
 assert.equal(p.decisions.is_relevant.verdict, 'review', '0.55 sits mid-band → human decides');
 assert.equal(p.decisions.releases_code.verdict, 'yes', '0.95 clears the high threshold');
 assert.equal(p.decisions.contribution_type.verdict, 'review', 'confidence 0.41 below 0.6 → review');
+assert.equal(p.decisions.is_relevant.confidence, 0.6, 'noul confidence kept as a second axis');
 assert.equal(p.decisions.is_relevant.version, 1, 'question version recorded for cache invalidation');
 
 const untouched = out.find((x) => x.arxiv_id === '2602.14690');

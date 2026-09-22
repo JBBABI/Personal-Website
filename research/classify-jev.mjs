@@ -12,11 +12,26 @@
       re-runs that question only, not the other five.
 
    Usage:  JEV_API_KEY=… node research/classify-jev.mjs [--limit N] [--dry-run]
+           node --env-file=.env research/classify-jev.mjs --limit 10
 
-   ⚠  The endpoint and request shape below are UNVERIFIED — they came from
-      secondary coverage, because docs.typesafe.ai could not be reached from
-      the machine this was written on. Check both against the real docs before
-      the first paid run, and never send a key to a host you have not checked.
+   Env:    JEV_API_KEY   required for a real run
+           JEV_ENDPOINT  override the default endpoint
+           JEV_MODEL     override the model id (default jev-1.13.0)
+
+   Request shape follows the documented quickstart: a model id, the state as
+   text, and questions as an object keyed by id. An earlier guess at
+   /v1/decisions with an array of questions returned 404.
+
+   Response shape, confirmed against the cookbook:
+
+     { "answers": {
+         "intent":      { "type":"choice", "choice":"bug_frustration",
+                          "confidence":0.98, "probabilities":{...} },
+         "is_churning": { "type":"noul", "noul":0.95, "confidence":0.95 } } }
+
+   A noul's value lives in `noul`, not `probability`. The first real call still
+   prints the raw body once, so a future API change shows up immediately rather
+   than as silent undefineds.
    ========================================================================== */
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -27,7 +42,8 @@ import { questions } from './questions.ts';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, 'data', 'papers.json');
 
-const ENDPOINT = process.env.JEV_ENDPOINT ?? 'https://api.typesafe.ai/v1/decisions';
+const ENDPOINT = process.env.JEV_ENDPOINT ?? 'https://api.typesafe.ai/v1/systemone';
+const MODEL = process.env.JEV_MODEL ?? 'jev-1.13.0';
 const KEY = process.env.JEV_API_KEY;
 
 /** Which questions does this paper still owe an answer to? */
@@ -38,33 +54,42 @@ function pending(paper) {
   });
 }
 
-/* Only the fields a decision should rest on. Deliberately excludes dates and
-   author names: Jev is documented to be weak at date comparison, and author
-   identity is not something a filter should be keying off anyway. */
+/* The state is sent as text. Deliberately excludes dates and author names:
+   Jev is documented to be weak at date comparison, and author identity is not
+   something a filter should be keying off anyway. */
 function stateOf(paper) {
-  return {
-    title: paper.title,
-    abstract: paper.abstract,
-    categories: paper.categories,
-    comment: paper.comment,
-  };
+  return [
+    `Title: ${paper.title}`,
+    `Categories: ${(paper.categories ?? []).join(', ')}`,
+    paper.comment ? `Author comment: ${paper.comment}` : null,
+    ``,
+    `Abstract: ${paper.abstract}`,
+  ].filter((l) => l !== null).join('\n');
 }
 
+/* Jev takes questions as an object keyed by id, not an array, and both kinds
+   carry `instructions`. The authored form in questions.ts keeps `claim` for
+   nouls because that reads better next to the rule "one claim per noul" —
+   this is the only place the two shapes are reconciled. */
 function toJevQuestions(qs) {
-  return qs.map((q) =>
+  return Object.fromEntries(qs.map((q) => [
+    q.id,
     q.type === 'noul'
-      ? { id: q.id, type: 'noul', claim: q.claim }
-      : { id: q.id, type: 'choice', prompt: q.prompt, options: q.options },
-  );
+      ? { type: 'noul', instructions: q.claim }
+      : { type: 'choice', instructions: q.instructions, criteria: q.criteria },
+  ]));
 }
 
 /** Turn a raw Jev answer into what gets stored, including the routing band. */
 function store(q, answer) {
   if (q.type === 'noul') {
-    const p = answer.probability;
+    // `noul` is P(yes). It carries its own confidence, which is a second axis:
+    // the value says what, the confidence says whether to act on it.
+    const p = answer.noul;
     return {
       version: q.version,
       probability: p,
+      confidence: answer.confidence,
       // 'review' is the quality gate: anything Jev is unsure about becomes a
       // human decision instead of a confident guess.
       verdict: p >= q.thresholds.high ? 'yes' : p <= q.thresholds.low ? 'no' : 'review',
@@ -79,14 +104,31 @@ function store(q, answer) {
   };
 }
 
+let rawShapeShown = false;
+
 async function askJev(paper, qs) {
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ state: stateOf(paper), questions: toJevQuestions(qs) }),
+    body: JSON.stringify({
+      model: MODEL,
+      state: stateOf(paper),
+      questions: toJevQuestions(qs),
+    }),
   });
   if (!res.ok) throw new Error(`Jev returned ${res.status}: ${await res.text()}`);
-  return res.json();
+
+  const body = await res.json();
+  if (!rawShapeShown) {
+    // Print the first response verbatim. The response shape was not in the
+    // material this was written from, so this is how it gets confirmed rather
+    // than assumed a second time.
+    console.log('\n--- first raw response (confirming the shape) ---');
+    console.log(JSON.stringify(body, null, 2));
+    console.log('--- end raw response ---\n');
+    rawShapeShown = true;
+  }
+  return body;
 }
 
 async function main() {
@@ -107,8 +149,12 @@ async function main() {
     const sample = todo[0];
     if (sample) {
       console.log('\nfirst payload that would be sent:\n');
-      console.log(JSON.stringify(
-        { state: stateOf(sample), questions: toJevQuestions(pending(sample)) }, null, 2));
+      console.log(JSON.stringify({
+        model: MODEL,
+        state: stateOf(sample),
+        questions: toJevQuestions(pending(sample)),
+      }, null, 2));
+      console.log(`\nwould POST to: ${ENDPOINT}`);
     }
     console.log('\n--dry-run: nothing sent, nothing written.');
     return;

@@ -100,11 +100,36 @@ separate papers in that cluster — it is not a term an outsider would guess.
 Widen the list only with evidence. Every term added is noise the filter then
 has to remove.
 
-## Unverified
+## The Jev API
 
-The Jev endpoint and request shape in `classify-jev.mjs` came from secondary
-coverage: `docs.typesafe.ai` was unreachable from the machine this was written
-on. **Check both against the real docs before the first paid run**, and do not
-send an API key to a host you have not verified — several sites ranking for
-Jev right now are SEO farms, and one of them publishes an endpoint on a domain
-unrelated to typesafe.ai.
+Confirmed against the quickstart and cookbook after a first guess returned 404.
+
+```
+POST https://api.typesafe.ai/v1/systemone
+Authorization: Bearer $JEV_API_KEY
+
+{ "model": "jev-1.13.0",
+  "state": "…text…",
+  "questions": {
+    "is_relevant":       { "type": "noul",   "instructions": "…" },
+    "contribution_type": { "type": "choice", "instructions": "…",
+                           "criteria": { "method": "…", "other": "…" } } } }
+```
+
+```
+{ "answers": {
+    "is_relevant":       { "type": "noul",   "noul": 0.95, "confidence": 0.95 },
+    "contribution_type": { "type": "choice", "choice": "method",
+                           "confidence": 0.98, "probabilities": { … } } } }
+```
+
+Three things that are easy to get wrong: `questions` is an **object keyed by
+id**, not an array; a noul's value is in **`noul`**, not `probability`; and
+choice options are a **`criteria` map of name → description**, not a list of
+labels. The last is an improvement — an ambiguous option can be disambiguated
+in words rather than hoping the label carries it.
+
+Override with `JEV_ENDPOINT` and `JEV_MODEL` if either moves.
+
+Jev is also served through OpenRouter, Cloudflare Workers AI, Vercel and
+Netlify gateways, each with its own endpoint.

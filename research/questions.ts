@@ -38,8 +38,13 @@ interface Choice {
   id: string;
   type: 'choice';
   version: number;
-  prompt: string;
-  options: readonly string[];
+  instructions: string;
+  /**
+   * Option name → what that option means. Jev's API takes descriptions rather
+   * than bare labels, which is an improvement: an ambiguous option can be
+   * disambiguated in words instead of hoping the label carries it.
+   */
+  criteria: Readonly<Record<string, string>>;
   /** Below this, the paper is queued for manual review rather than tagged. */
   minConfidence: number;
 }
@@ -72,16 +77,16 @@ export const questions = [
   {
     id: 'contribution_type',
     type: 'choice',
-    version: 1,
-    prompt: 'What kind of contribution does this paper primarily make?',
-    options: [
-      'method or system',
-      'benchmark or evaluation',
-      'survey or taxonomy',
-      'position or vision',
-      'empirical study',
-      'none of these',
-    ],
+    version: 2,
+    instructions: 'What kind of contribution does this paper primarily make?',
+    criteria: {
+      method: 'Introduces a new technique, model, architecture or system.',
+      benchmark: 'Introduces a dataset, benchmark or evaluation methodology.',
+      survey: 'Reviews or categorises existing work; a survey or taxonomy.',
+      position: 'Argues a viewpoint or proposes a research agenda without new experiments.',
+      study: 'Measures or analyses existing systems empirically without proposing a new one.',
+      other: 'None of the above fit.',
+    },
     minConfidence: 0.6,
   },
   {
