@@ -1,0 +1,184 @@
+---
+import { getCollection } from 'astro:content';
+import Section from './Section.astro';
+import SystemCard from './SystemCard.astro';
+import Trace from './Trace.astro';
+import { useTranslations, localePath, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const systems = (await getCollection('systems', e => e.data.lang === lang))
+  .sort((a, b) => a.data.order - b.data.order);
+
+// Spec sheet — reads as an equipment data plate rather than an "about me".
+const spec = lang === 'fr'
+  ? [
+      { k: 'Rôle',        v: 'Ingénieur agentique' },
+      { k: 'Focus',       v: 'Agents autonomes, outillage, évaluation' },
+      { k: 'Langues',     v: 'Français · Anglais' },
+      { k: 'Disponible',  v: 'Oui', live: true },
+    ]
+  : [
+      { k: 'Role',        v: 'Agentic Engineer' },
+      { k: 'Focus',       v: 'Autonomous agents, tooling, evals' },
+      { k: 'Languages',   v: 'French · English' },
+      { k: 'Available',   v: 'Yes', live: true },
+    ];
+
+// NOTE: these figures come from the previous site's own copy. Verify before launch.
+const record = lang === 'fr'
+  ? [
+      { n: '2 500', u: '/ mois',  d: 'Visites organiques générées de zéro en un an (My Tahiti Shop)' },
+      { n: '200',   u: 'clients', d: 'Acquis via le canal organique sur la même période' },
+      { n: '2',     u: 'e-commerces', d: 'Pilotés de bout en bout : SEO, contenu, fiches produits' },
+    ]
+  : [
+      { n: '2,500', u: '/ month',   d: 'Organic visits grown from zero in one year (My Tahiti Shop)' },
+      { n: '200',   u: 'customers', d: 'Acquired through the organic channel in the same period' },
+      { n: '2',     u: 'storefronts', d: 'Run end to end: SEO, content, product pages' },
+    ];
+
+const resume = lang === 'fr' ? '/pdf/cv-fr.pdf' : '/pdf/resume-en.pdf';
+const contacts = [
+  { k: t('contact.email'),    v: 'bonvarletjeanbaptiste@gmail.com', href: 'mailto:bonvarletjeanbaptiste@gmail.com' },
+  { k: t('contact.linkedin'), v: '/in/jean-baptiste-bonvarlet',     href: 'https://www.linkedin.com/in/jean-baptiste-bonvarlet/' },
+  { k: t('contact.github'),   v: '@jbbabi',                          href: 'https://github.com/jbbabi' },
+  { k: t('contact.resume'),   v: lang === 'fr' ? 'cv-fr.pdf' : 'resume-en.pdf', href: resume },
+];
+---
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="wrap hero__in">
+    <div class="hero__lead">
+      <span class="live hero__status">{t('hero.status')}</span>
+      <h1 class="hero__h1">{t('hero.headline')}</h1>
+      <p class="prose hero__sub">{t('hero.sub')}</p>
+      <div class="hero__cta">
+        <a class="btn btn--solid" href="#systems">{t('hero.cta')}</a>
+        <a class="btn" href="#trace">{t('hero.ctaAlt')}</a>
+      </div>
+    </div>
+
+    <dl class="spec">
+      {spec.map(s => (
+        <div class="spec__row">
+          <dt class="label">{s.k}</dt>
+          <dd class:list={['spec__v', s.live && 'spec__v--live']}>{s.v}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</header>
+
+<!-- ===================== SYSTEMS ===================== -->
+<Section id="systems" label={t('systems.label')} title={t('systems.title')} intro={t('systems.intro')}>
+  {systems.every(s => s.data.placeholder) && (
+    <p class="note">{t('systems.empty')}</p>
+  )}
+  <div class="grid">
+    {systems.map((s, i) => (
+      <SystemCard
+        lang={lang} index={i + 1}
+        placeholder={s.data.placeholder}
+        title={s.data.title} summary={s.data.summary}
+        role={s.data.role} stack={s.data.stack}
+        autonomy={s.data.autonomy} outcome={s.data.outcome}
+        year={s.data.year} links={s.data.links}
+      />
+    ))}
+  </div>
+</Section>
+
+<!-- ===================== TRACE ===================== -->
+<Section id="trace" label={t('trace.label')} title={t('trace.title')} intro={t('trace.intro')}>
+  <Trace lang={lang} />
+</Section>
+
+<!-- ===================== RECORD ===================== -->
+<Section id="record" label={t('record.label')} title={t('record.title')} intro={t('record.intro')}>
+  <div class="stats">
+    {record.map(r => (
+      <div class="stat">
+        <div class="stat__n"><span class="num">{r.n}</span><span class="label stat__u">{r.u}</span></div>
+        <p class="stat__d">{r.d}</p>
+      </div>
+    ))}
+  </div>
+</Section>
+
+<!-- ===================== CONTACT ===================== -->
+<Section id="contact" label={t('contact.label')} title={t('contact.title')} intro={t('contact.intro')}>
+  <dl class="cts">
+    {contacts.map(c => (
+      <div class="cts__row">
+        <dt class="label">{c.k}</dt>
+        <dd class="cts__v">
+          <a class="link mono" href={c.href}
+             target={c.href.startsWith('http') ? '_blank' : undefined}
+             rel={c.href.startsWith('http') ? 'noopener noreferrer' : undefined}>{c.v}</a>
+        </dd>
+      </div>
+    ))}
+  </dl>
+</Section>
+
+<style>
+  /* ---------- hero ---------- */
+  .hero { padding-block: clamp(var(--s-8), 12vh, var(--s-10)); }
+  .hero__in { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--s-8); align-items: start; }
+  .hero__status { margin-bottom: var(--s-5); }
+  .hero__h1 { margin-bottom: var(--s-5); max-width: 18ch; }
+  .hero__sub { font-size: var(--t-md); margin-bottom: var(--s-6); }
+  .hero__cta { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: var(--s-2);
+    font-family: var(--font-mono); font-size: var(--t-sm);
+    letter-spacing: 0.04em;
+    padding: 10px 18px; border-radius: var(--radius);
+    border: var(--hairline) solid var(--line-bright);
+    color: var(--text-dim);
+    transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+  }
+  .btn:hover { color: var(--text); border-color: var(--text-dim); }
+  .btn--solid { background: var(--text); color: var(--surface-0); border-color: var(--text); }
+  .btn--solid:hover { background: var(--text-dim); border-color: var(--text-dim); color: var(--surface-0); }
+
+  /* Equipment data plate */
+  .spec { border: var(--hairline) solid var(--line); border-radius: var(--radius); margin: 0; background: var(--surface-1); }
+  .spec__row { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--s-3); padding: var(--s-3) var(--s-4); align-items: baseline; }
+  .spec__row + .spec__row { border-top: var(--hairline) solid var(--line); }
+  .spec__row dt { padding-top: 2px; }
+  .spec__v { margin: 0; font-size: var(--t-sm); color: var(--text); }
+  .spec__v--live { color: var(--signal); }
+
+  @media (max-width: 860px) {
+    .hero__in { grid-template-columns: 1fr; gap: var(--s-6); }
+    .hero__h1 { max-width: none; }
+  }
+
+  /* ---------- systems ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-4); }
+  .note {
+    font-family: var(--font-mono); font-size: var(--t-sm); color: var(--text-faint);
+    border-left: 2px solid var(--line-bright); padding-left: var(--s-4);
+    margin-bottom: var(--s-5); max-width: var(--measure);
+  }
+
+  /* ---------- record ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s-4); }
+  .stat { border: var(--hairline) solid var(--line); border-radius: var(--radius); padding: var(--s-5) var(--s-4); background: var(--surface-1); }
+  .stat__n { display: flex; align-items: baseline; gap: var(--s-2); margin-bottom: var(--s-3); }
+  .stat__n .num { font-size: var(--t-xl); letter-spacing: -0.04em; color: var(--text); line-height: 1; }
+  .stat__u { color: var(--text-faint); }
+  .stat__d { font-size: var(--t-sm); color: var(--text-dim); }
+
+  /* ---------- contact ---------- */
+  .cts { border-top: var(--hairline) solid var(--line); margin: 0; max-width: 640px; }
+  .cts__row { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--s-4); padding: var(--s-4) 0; align-items: baseline; border-bottom: var(--hairline) solid var(--line); }
+  .cts__v { margin: 0; font-size: var(--t-sm); }
+  @media (max-width: 460px) { .cts__row { grid-template-columns: 1fr; gap: var(--s-2); } }
+</style>

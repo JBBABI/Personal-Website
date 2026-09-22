@@ -1,0 +1,39 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const year = new Date().getFullYear();
+---
+<footer class="ft">
+  <div class="wrap ft__in">
+    <div class="ft__col">
+      <div class="mono ft__name">Jean-Baptiste Bonvarlet</div>
+      <p class="label ft__note">{t('footer.built')}</p>
+    </div>
+    <div class="ft__col ft__col--end">
+      <a class="label ft__link" href="https://github.com/jbbabi/personal-website"
+         target="_blank" rel="noopener noreferrer">{t('footer.source')}</a>
+      <span class="label ft__year">© {year}</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .ft { border-top: var(--hairline) solid var(--line); }
+  .ft__in {
+    display: flex; flex-wrap: wrap; gap: var(--s-5);
+    justify-content: space-between; align-items: flex-end;
+    padding-block: var(--s-6);
+  }
+  .ft__col { display: flex; flex-direction: column; gap: var(--s-2); }
+  .ft__col--end { align-items: flex-end; }
+  .ft__name { font-size: var(--t-sm); color: var(--text); }
+  .ft__note { color: var(--text-faint); letter-spacing: 0.06em; text-transform: none; }
+  .ft__link { color: var(--text-dim); transition: color var(--t-fast) var(--ease); }
+  .ft__link:hover { color: var(--text); }
+  .ft__year { color: var(--text-faint); }
+  @media (max-width: 560px) {
+    .ft__col--end { align-items: flex-start; }
+  }
+</style>
