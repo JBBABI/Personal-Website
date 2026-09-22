@@ -106,6 +106,7 @@ const fmtDate = (iso: string) => iso;
     </li>
   </template>
   <template data-tag><span class="tag"></span></template>
+  <span hidden data-unsure-label={t('research.unsure')} data-unsure-hint={t('research.unsureHint')}></span>
 
   <button class="more" type="button" data-more>{t('research.more')}</button>
 
@@ -137,8 +138,13 @@ const fmtDate = (iso: string) => iso;
 
   /* Labels come from the server-rendered markup rather than being hard-coded
      here, so the French page says "incertain" and not "unsure". */
+  /* Read from a dedicated element rather than scraped off a rendered row: the
+     first 50 papers may contain no unsure one, and then the French page
+     silently labelled its tags in English. */
+  const labels = document.querySelector<HTMLElement>('[data-unsure-label]')!;
   const strings = {
-    unsure: document.querySelector<HTMLElement>('.tag--unsure')?.textContent?.trim() || 'unsure',
+    unsure: labels.dataset.unsureLabel!,
+    unsureHint: labels.dataset.unsureHint!,
     of: document.documentElement.lang === 'fr' ? 'sur' : 'of',
   };
 
@@ -182,7 +188,11 @@ const fmtDate = (iso: string) => iso;
     const tags = li.querySelector('.paper__tags')!;
     if (p.type) tags.appendChild(tag(p.type, 'tag--type'));
     for (const t of p.tags) tags.appendChild(tag(t));
-    if (p.unsure) tags.appendChild(tag(strings.unsure, 'tag--unsure'));
+    if (p.unsure) {
+      const u = tag(strings.unsure, 'tag--unsure');
+      u.title = strings.unsureHint;      // the server-rendered rows carry this too
+      tags.appendChild(u);
+    }
 
     return li;
   }
@@ -350,6 +360,11 @@ const fmtDate = (iso: string) => iso;
   .tag--type { color: var(--text); border-color: var(--line-bright); }
   /* Marked, not hidden, and quiet enough not to read as a warning. */
   .tag--unsure { color: var(--text-faint); border-style: dashed; }
+
+  /* [hidden] must win over the display below, or `moreBtn.hidden = true` is
+     silently ignored: a class selector outranks the UA sheet's [hidden] rule.
+     Same for the status line and the clear chip. */
+  .more[hidden], .ri__status[hidden], .chip[hidden] { display: none; }
 
   .more {
     display: block; width: 100%; margin-top: var(--s-6);

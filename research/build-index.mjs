@@ -18,7 +18,6 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { questions } from './questions.ts';
 import { PAPERS } from './paths.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));

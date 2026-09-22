@@ -16,7 +16,7 @@
    every three seconds, which RATE_LIMIT_MS honours. Do not lower it.
    ========================================================================== */
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { PAPERS as OUT } from './paths.mjs';
 
@@ -197,7 +197,11 @@ async function main() {
 
   const all = [...seen.values()].sort((a, b) => b.published.localeCompare(a.published));
   await mkdir(dirname(OUT), { recursive: true });
-  await writeFile(OUT, JSON.stringify(all, null, 2) + '\n');
+  // Written and renamed rather than in place: loadExisting already refuses to
+  // overwrite a corpus it cannot parse, so a half-written file would not lose
+  // the decisions but would leave them unreadable until someone intervened.
+  await writeFile(`${OUT}.tmp`, JSON.stringify(all, null, 2) + '\n');
+  await rename(`${OUT}.tmp`, OUT);
 
   console.log(`\n${added} new, ${revised} revised, ${all.length} total → ${OUT}`);
   if (added === 0 && existing.length === 0) {

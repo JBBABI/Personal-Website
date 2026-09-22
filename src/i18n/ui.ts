@@ -6,9 +6,10 @@ export const ui = {
   en: {
     'nav.skipToMain': 'Skip to content',
 
+    'nav.name': 'Jean-Baptiste Bonvarlet',
     'nav.research': 'Research',
     'research.title': 'Research index',
-    'research.lede': 'Every arXiv paper matching a fixed set of agentic-engineering terms, tagged so you can filter them. Not a best-of list — no ranking, no editorial.',
+    'research.lede': 'Every arXiv paper matching a fixed set of terms on agentic engineering, tagged so you can filter them yourself instead of trusting a ranking.',
     'research.papers': 'papers',
     'research.updated': 'updated',
     'research.filterLabel': 'Filter by topic',
@@ -37,9 +38,10 @@ export const ui = {
   fr: {
     'nav.skipToMain': 'Aller au contenu',
 
+    'nav.name': 'Jean-Baptiste Bonvarlet',
     'nav.research': 'Recherche',
     'research.title': 'Index de recherche',
-    'research.lede': "Tous les articles arXiv correspondant à une liste fixe de termes liés à l'ingénierie agentique, étiquetés pour que vous puissiez les filtrer. Pas une sélection — aucun classement, aucun éditorial.",
+    'research.lede': "Tous les articles arXiv correspondant à une liste fixe de termes sur l'ingénierie agentique, étiquetés pour que vous puissiez les filtrer plutôt que de vous fier à un classement.",
     'research.papers': 'articles',
     'research.updated': 'mis à jour',
     'research.filterLabel': 'Filtrer par sujet',

@@ -45,7 +45,7 @@
    undefineds.
    ========================================================================== */
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { questions } from './questions.ts';
 import { stableOrder } from './sample.mjs';
@@ -217,7 +217,11 @@ async function askJev(paper, qs) {
     lastError = new Error(`Jev returned ${res.status}: ${text}`);
     if (!isRetryable(res.status) || attempt === MAX_ATTEMPTS) throw lastError;
 
-    const wait = retryAfterMs(res) ?? RETRY_BASE_MS * 2 ** (attempt - 1);
+    /* Capped at a minute. Retry-After is worth honouring, but an unattended
+       job told to wait an hour would spend its entire timeout asleep and
+       report nothing — better to back off sensibly and let the next run
+       resume from the committed checkpoint. */
+    const wait = Math.min(retryAfterMs(res) ?? RETRY_BASE_MS * 2 ** (attempt - 1), 60_000);
     console.warn(`  ${paper.arxiv_id}: ${res.status}, retrying in ${Math.round(wait / 1000)}s ` +
       `(attempt ${attempt}/${MAX_ATTEMPTS})`);
     await sleep(wait);
@@ -311,7 +315,15 @@ async function main() {
   let scored = 0;
   let inputTokens = 0;
 
-  const save = () => writeFile(DATA, JSON.stringify(papers, null, 2) + '\n');
+  /* tmp + rename, like gold.json. This runs every ten papers inside a job that
+     can be cut off by a 340-minute timeout, and an in-place write caught at the
+     wrong moment leaves a truncated corpus that the always() commit step then
+     commits — after which fetch, classify and build all refuse to start. */
+  const save = async () => {
+    const tmp = `${DATA}.tmp`;
+    await writeFile(tmp, JSON.stringify(papers, null, 2) + '\n');
+    await rename(tmp, DATA);
+  };
 
   try {
     for (const paper of todo) {

@@ -1,28 +1,26 @@
 name: Research — weekly index update
 
-# THIS FILE MUST LIVE ON THE DEFAULT BRANCH. GitHub only fires `schedule` (and
-# `workflow_dispatch`) for workflows present on the default branch — the same
-# rule that silently stopped research-classify from ever being dispatchable
-# while it lived only on research-pipeline. It runs ON main but works AGAINST
-# research-pipeline, which is what the checkout ref below is for.
+# Pull new arXiv papers, classify whatever has no answer yet, commit both.
 #
-# What it does, once a week: pull any new arXiv papers, classify everything
-# that does not yet have an answer, and commit both back.
+# Runs on and commits to `main`. That is load-bearing rather than incidental:
+# deploy.yml fires on push to main, so data committed anywhere else would
+# update the corpus and never reach the published page. An earlier version
+# committed to a feature branch and the site would have silently frozen while
+# every run reported success.
 #
-# This used to be manual because it costs money. Measured against the real
-# corpus that reasoning does not survive: a paper is ~400 tokens of abstract
-# plus ~613 tokens of questions, at $0.042 per million input tokens. The entire
-# 4,683-paper backlog is about $0.20, and a week of new papers (~46) is about
-# $0.002 — roughly ten cents a year. A human gate on twenty cents is not a
-# safeguard, it is just a person who has to remember.
+# GitHub only fires `schedule` and `workflow_dispatch` for workflows on the
+# default branch, so this file has to live here regardless.
 #
-# The real risk was never the price per paper, it was an unattended loop. That
-# is handled by --max-spend inside classify-jev.mjs rather than by a human.
+# Cost, measured rather than assumed: ~400 tokens of abstract plus ~613 of
+# questions per paper at $0.042 per million input tokens. The entire
+# 4,683-paper backlog is about $0.20 and a week of new papers about $0.002 —
+# roughly ten cents a year. The guard against a runaway loop is --max-spend,
+# not a human.
 
 on:
   schedule:
-    # Mondays, 06:00 UTC. Nothing depends on the hour; it is offset from the
-    # top of the hour purely so it is not queued behind everyone else's cron.
+    # Mondays 06:17 UTC. Offset from the hour so it is not queued behind
+    # everyone else's cron.
     - cron: '17 6 * * 1'
   workflow_dispatch:
     inputs:
@@ -33,31 +31,32 @@ on:
 permissions:
   contents: write
 
-# Shared with the other research workflows: they all push to the same branch,
-# and without this a fetch and a classify can race and one loses its commit.
+# Shared verbatim with research-classify. Both push to main, and a group keyed
+# on github.ref would put a run dispatched from a different ref in a different
+# group — which is exactly how two jobs end up racing for the same branch.
 concurrency:
-  group: research-data-refs/heads/research-pipeline
+  group: research-data
   cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    # The first run has 4,683 papers of backlog to work through sequentially.
-    # Later runs have ~46 and finish in a minute. If a run is cut off, the
-    # decisions bought so far are committed and the next run resumes from
-    # them — nothing is re-paid for.
+    # A full backlog runs sequentially. Later runs have ~46 papers and finish
+    # in a minute. A run cut off here still commits what it bought, and the
+    # next one resumes from that rather than re-paying.
     timeout-minutes: 340
 
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: research-pipeline
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # Same self-healing depth as research-fetch: backfill the field if the
-      # corpus is thin, newest-only once it is full.
+      # Depth chosen from what is stored: backfill the field when the corpus is
+      # thin, newest-only once it is full. fetch-arxiv merges and never drops
+      # what it has, so a corpus lost to a fresh checkout repairs itself.
       - name: Fetch new papers
         run: |
           have=$(node -e 'try { console.log(require("./research/data/papers.json").length) } catch { console.log(0) }')
@@ -66,35 +65,32 @@ jobs:
           node research/fetch-arxiv.mjs --max "$max"
 
       - name: How much is outstanding
-        id: pending
         run: |
           node -e '
             const p = require("./research/data/papers.json");
             const todo = p.filter(x => Object.keys(x.decisions || {}).length === 0).length;
             console.log(`${p.length} papers, ${todo} with no decisions yet`);
-            // ~1013 input tokens per paper at $0.042/M.
             console.log(`rough cost if all are classified: $${(todo * 1013 * 0.042 / 1e6).toFixed(3)}`);
           ' | tee -a "$GITHUB_STEP_SUMMARY"
 
-      # No --limit. The point of a scheduled run is that it finishes the work
-      # rather than leaving a remainder for someone to notice. --max-spend is
-      # the guard instead, and it is a ceiling rather than a budget: 25x the
-      # largest legitimate run, so it never interrupts real work but does stop
-      # a loop caused by a bad version bump billing all night.
+      # No --limit: a scheduled run should finish the work rather than leave a
+      # remainder for someone to notice. --max-spend is the ceiling instead.
+      # The input goes through env rather than into the run: line, so a crafted
+      # dispatch value cannot become shell.
       - name: Classify everything outstanding
         env:
           JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
           JEV_ENDPOINT: ${{ vars.JEV_ENDPOINT }}
-        run: node research/classify-jev.mjs --max-spend "${{ inputs.max_spend || '5' }}"
+          MAX_SPEND: ${{ inputs.max_spend || '5' }}
+        run: node research/classify-jev.mjs --max-spend "$MAX_SPEND"
 
       - name: What the index looks like now
         if: always()
         run: node research/report.mjs --all 2>/dev/null | head -60 | tee -a "$GITHUB_STEP_SUMMARY" || true
 
-      # always(), because a run cut short by the job timeout or a persistent
-      # API failure has still bought real decisions, and they are checkpointed
-      # to disk. Committing them is what makes the next run resume instead of
-      # starting over.
+      # always(), because a run cut short by the timeout has still bought real
+      # decisions and checkpointed them. Committing is what lets the next run
+      # resume instead of starting over.
       - name: Commit the update
         if: always()
         run: |
@@ -105,8 +101,8 @@ jobs:
             echo "nothing changed this week"
           else
             git commit -m "Weekly index update: new papers and classifications"
-            # Rebase rather than force: a human may have pushed to this branch
-            # while a long backlog run was going.
-            git pull --rebase origin research-pipeline
-            git push origin HEAD:research-pipeline
+            # Rebase before pushing: a long backlog run can take hours, and a
+            # person may well have pushed to main in the meantime.
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi

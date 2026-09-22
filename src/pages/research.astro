@@ -1,5 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import ResearchIndex from '../components/ResearchIndex.astro';
+import { useTranslations } from '../i18n/ui';
+const t = useTranslations('en');
 ---
-<Base lang="en" path="/research"><div class="wrap"><ResearchIndex lang="en" /></div></Base>
+<Base lang="en" path="/research" title={t('research.title')} description={t('research.lede')}>
+  <div class="wrap"><ResearchIndex lang="en" /></div>
+</Base>

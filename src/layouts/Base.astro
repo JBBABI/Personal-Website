@@ -6,9 +6,15 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { useTranslations, localePath, type Lang } from '../i18n/ui';
 
-interface Props { lang: Lang; path?: string; }
-const { lang, path = '/' } = Astro.props;
+interface Props { lang: Lang; path?: string; title?: string; description?: string; }
+const { lang, path = '/', title, description } = Astro.props;
 const t = useTranslations(lang);
+
+/* A page may name itself. Without this every route shared the homepage's
+   title and description, so the research index was indistinguishable from
+   the home page in search results, in a browser tab and in a shared link. */
+const pageTitle = title ? `${title} — ${t('meta.title')}` : t('meta.title');
+const pageDesc = description ?? t('meta.description');
 
 const site = Astro.site ?? new URL('https://jeanbaptistebonvarlet.com');
 const canonical = new URL(localePath(lang, path), site).href;
@@ -21,8 +27,8 @@ const ogImage = new URL('/img/og.png', site).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{t('meta.title')}</title>
-    <meta name="description" content={t('meta.description')} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
 
     <link rel="canonical" href={canonical} />
     <link rel="alternate" hreflang="en" href={altEn} />
@@ -34,8 +40,8 @@ const ogImage = new URL('/img/og.png', site).href;
     <meta name="theme-color" content="#EDEDE8" media="(prefers-color-scheme: light)" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={t('meta.title')} />
-    <meta property="og:description" content={t('meta.description')} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:locale" content={lang === 'fr' ? 'fr_FR' : 'en_US'} />
