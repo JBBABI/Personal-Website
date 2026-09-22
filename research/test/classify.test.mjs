@@ -13,7 +13,8 @@ await writeFile(DATA, JSON.stringify([
   { arxiv_id: '2606.05608', version: 1, published: '2026-06-04',
     title: 'Agentic Software', abstract: 'Agents as software.',
     categories: ['cs.SE'], comment: 'ICSE 2026', decisions: {} },
-  // Already answered at the CURRENT version — must not be sent again.
+  // Already answered the first three at the CURRENT version. Adding new
+  // questions makes it pending again, but only for the NEW ones.
   { arxiv_id: '2602.14690', version: 3, published: '2026-02-20',
     title: 'Harness Engineering', abstract: 'Harness study.',
     categories: ['cs.SE'], comment: '',
@@ -28,6 +29,7 @@ const sent = [];
 globalThis.fetch = async (url, opts) => {
   const body = JSON.parse(opts.body);
   sent.push(body);
+  void body;
   assert.equal(opts.headers.Authorization, 'Bearer test-key');
   assert.equal(body.model, 'jev-1.13.0', 'model id sent');
   assert.equal(typeof body.state, 'string', 'state is text, per the API');
@@ -36,7 +38,12 @@ globalThis.fetch = async (url, opts) => {
   assert.ok(!Array.isArray(body.questions), 'questions is an object keyed by id, not an array');
   return {
     ok: true, status: 200,
+    // Echo back an answer for whatever was asked, so the stub stays valid as
+    // questions are added.
     json: async () => ({ answers: {
+      ...Object.fromEntries(Object.keys(body.questions)
+        .filter((k) => k.startsWith('topic_'))
+        .map((k) => [k, { type: 'noul', noul: 0.8 }])),
       // Mid-band on purpose: must be routed to review, not silently guessed.
       is_relevant:       { type: 'noul', noul: 0.55 },
       contribution_type: { type: 'choice', choice: 'position', confidence: 0.41,
@@ -51,12 +58,27 @@ process.argv = [process.argv[0], 'classify-jev.mjs'];
 await import('../classify-jev.mjs');
 await new Promise((r) => setTimeout(r, 400));
 
-assert.equal(sent.length, 1, 'only the unclassified paper was sent — caching holds');
-assert.equal(Object.keys(sent[0].questions).length, 3);
-assert.equal(sent[0].questions.is_relevant.type, 'noul');
-assert.ok(sent[0].questions.is_relevant.instructions, 'nouls carry instructions');
-assert.ok(sent[0].questions.contribution_type.criteria.other,
+assert.equal(sent.length, 2, 'both papers sent: the second owes answers to the new topics');
+
+const [firstSent, secondSent] = sent;
+const { questions: allQs } = await import('../questions.ts');
+
+assert.equal(Object.keys(firstSent.questions).length, allQs.length,
+  'unclassified paper is asked everything');
+
+// The point of per-question caching: the partly-classified paper is asked
+// only what it does not already have.
+const askedOfSecond = Object.keys(secondSent.questions);
+assert.ok(askedOfSecond.every((k) => k.startsWith('topic_')),
+  `only the new topic questions re-asked, got: ${askedOfSecond.join(', ')}`);
+assert.ok(!askedOfSecond.includes('is_relevant'),
+  'an answer already paid for is never re-sent');
+assert.equal(firstSent.questions.is_relevant.type, 'noul');
+assert.ok(firstSent.questions.is_relevant.instructions, 'nouls carry instructions');
+assert.ok(firstSent.questions.contribution_type.criteria.other,
   'choice criteria include an escape option');
+assert.ok(firstSent.questions.topic_security.instructions.length > 40,
+  'topic claims are specific, not one-word labels');
 
 const out = JSON.parse(await readFile(DATA, 'utf8'));
 const p = out.find((x) => x.arxiv_id === '2606.05608');
@@ -71,5 +93,10 @@ assert.equal(p.decisions.is_relevant.version, 1, 'question version recorded for 
 
 const untouched = out.find((x) => x.arxiv_id === '2602.14690');
 assert.equal(untouched.decisions.is_relevant.probability, 0.91, 'already-paid-for answers kept');
+assert.equal(untouched.decisions.topic_security.verdict, 'yes', 'new topics added alongside');
+
+// Topics overlap by design — a paper may carry several.
+assert.ok(Object.keys(p.decisions).filter((k) => k.startsWith('topic_')).length > 1,
+  'multiple topics can be true at once');
 
 console.log('PASS — caching, thresholds and review routing all behave');

@@ -89,6 +89,80 @@ export const questions = [
     },
     minConfidence: 0.6,
   },
+  /* --------------------------------------------------------------------------
+     TOPIC FACETS
+
+     Nouls, not one Choice, because papers genuinely span topics — a paper on
+     memory-poisoning defences is both security and memory, and a Choice would
+     force it to lie. Each is an independent claim, so overlap is representable
+     and every tag stays separately checkable.
+
+     Nearly free to add: Jev answers all questions in one call and the cost is
+     dominated by the abstract, which is sent once regardless.
+     ------------------------------------------------------------------------ */
+  {
+    id: 'topic_security',
+    type: 'noul',
+    version: 1,
+    claim:
+      'This paper is about the security, safety or governance of agents — ' +
+      'adversarial attacks, prompt or memory poisoning, sandboxing, ' +
+      'permissions, oversight, or constraining what an agent is allowed to do.',
+    thresholds: { low: 0.3, high: 0.7 },
+  },
+  {
+    id: 'topic_harness',
+    type: 'noul',
+    version: 1,
+    // The term the field uses for the scaffolding around the model. It showed
+    // up in two papers of the seed cluster and repeatedly in the first fetch,
+    // which is why it is a facet rather than a keyword search.
+    claim:
+      'This paper is about the harness or scaffolding around a model — the ' +
+      'external system mediating how an agent perceives and acts, including ' +
+      'its action space, context construction or control loop.',
+    thresholds: { low: 0.3, high: 0.7 },
+  },
+  {
+    id: 'topic_memory',
+    type: 'noul',
+    version: 1,
+    claim:
+      'This paper is about an agent\'s memory or context over time — ' +
+      'retaining information across steps or sessions, context management, ' +
+      'or retrieval of past state.',
+    thresholds: { low: 0.3, high: 0.7 },
+  },
+  {
+    id: 'topic_evaluation',
+    type: 'noul',
+    version: 1,
+    claim:
+      'This paper is about how to measure agents — benchmarks, evaluation ' +
+      'methodology, metrics, or testing. Not merely that the paper contains ' +
+      'an evaluation, but that measurement is a subject of the work.',
+    thresholds: { low: 0.3, high: 0.7 },
+  },
+  {
+    id: 'topic_tool_use',
+    type: 'noul',
+    version: 1,
+    claim:
+      'This paper is about agents calling tools, APIs or external systems, ' +
+      'including tool selection, tool interfaces and protocols such as MCP.',
+    thresholds: { low: 0.3, high: 0.7 },
+  },
+  {
+    id: 'topic_multi_agent',
+    type: 'noul',
+    version: 1,
+    // Replaces the single-vs-multi choice that was parked below: as a noul it
+    // needs no "not applicable" option and composes with the other topics.
+    claim:
+      'This paper involves two or more agents interacting with each other — ' +
+      'cooperating, competing, negotiating or coordinating.',
+    thresholds: { low: 0.3, high: 0.7 },
+  },
   {
     id: 'releases_code',
     type: 'noul',
@@ -105,14 +179,23 @@ export const questions = [
 ] as const satisfies readonly Question[];
 
 /* ----------------------------------------------------------------------------
-   LATER — do not enable until v1 has measured agreement rates.
+   NOTES
 
-   - agent_topology      choice: single-agent / multi-agent / not applicable
-   - reports_failures    noul:   reports negative results or failure modes
-   - human_in_loop       noul:   studies or requires human oversight
-   - eval_rigour         score:  0 none · 1 qualitative · 2 one benchmark
-                                 3 two or more public benchmarks
-   - reviewer_concerns   noul:   OpenReview only — reviewers raised
-                                 reproducibility concerns. No other index
-                                 offers this one.
+   Nothing here is a gate. Every answer is a facet stored on the paper; no
+   paper is ever excluded from the index by a decision made here. `is_relevant`
+   is a sort key and a slider, not an admission test — the first batch returned
+   8 yes / 2 review / 0 no, which makes it a weak gate but a usable score.
+
+   Adding a question does not invalidate existing work: the cache is keyed per
+   question version, so the six topics above will be asked of papers already
+   carrying the first three answers, and those three will not be re-paid for.
+
+   LATER
+   - reports_failures    noul:  reports negative results or failure modes
+   - human_in_loop       noul:  studies or requires human oversight
+   - eval_rigour         score: 0 none · 1 qualitative · 2 one benchmark
+                                3 two or more public benchmarks
+   - reviewer_concerns   noul:  OpenReview only — reviewers raised
+                                reproducibility concerns. No other index
+                                offers this one.
    -------------------------------------------------------------------------- */

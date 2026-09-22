@@ -36,17 +36,27 @@ let shown = papers;
 if (args.includes('--review')) shown = papers.filter(needsReview);
 if (args.includes('--relevant')) shown = papers.filter((p) => p.decisions.is_relevant?.verdict === 'yes');
 
+const TOPICS = ['security', 'harness', 'memory', 'evaluation', 'tool_use', 'multi_agent'];
+
+/** Topics a paper carries, as short tags. Overlap is expected and kept. */
+const topicsOf = (d) => TOPICS
+  .filter((t) => d[`topic_${t}`]?.verdict === 'yes')
+  .map((t) => t.replace('_', '-'));
+
 for (const p of shown) {
   const d = p.decisions;
   const rel = d.is_relevant ?? {};
   const type = d.contribution_type ?? {};
   const code = d.releases_code ?? {};
+  const tags = topicsOf(d);
+  const unsure = TOPICS.filter((t) => d[`topic_${t}`]?.verdict === 'review');
 
   console.log(`\n${p.title}`);
   console.log(`  ${p.url}  ${p.published}`);
   console.log(`  relevant  ${bar(rel.probability)} ${String(rel.probability ?? '?').padEnd(5)} ${rel.verdict ?? ''}`);
   console.log(`  type      ${String(type.choice ?? '?').padEnd(10)} @${type.confidence ?? '?'} ${type.verdict === 'review' ? 'REVIEW' : ''}`);
   console.log(`  code      ${bar(code.probability)} ${String(code.probability ?? '?').padEnd(5)} ${code.verdict ?? ''}`);
+  console.log(`  topics    ${tags.length ? tags.join(' · ') : '(none)'}${unsure.length ? `   unsure: ${unsure.join(' ')}` : ''}`);
 }
 
 /* The distributions matter more than any single row: they say whether the
@@ -63,6 +73,20 @@ console.log(`${papers.length} classified, ${papers.filter(needsReview).length} n
 for (const id of ['is_relevant', 'contribution_type', 'releases_code']) {
   console.log(`  ${id.padEnd(18)} ${JSON.stringify(counts(id))}`);
 }
+
+/* How often each topic fires. A topic that never fires is dead weight; one
+   that fires on everything is not discriminating. Both are worth seeing. */
+console.log('');
+for (const t of TOPICS) {
+  const c = counts(`topic_${t}`);
+  const yes = c.yes ?? 0;
+  const pct = papers.length ? Math.round((yes / papers.length) * 100) : 0;
+  console.log(`  topic ${t.padEnd(12)} ${String(yes).padStart(3)}/${papers.length}  ${String(pct).padStart(3)}%  ${JSON.stringify(c)}`);
+}
+
+const untagged = papers.filter((p) => topicsOf(p.decisions).length === 0).length;
+const multi = papers.filter((p) => topicsOf(p.decisions).length > 1).length;
+console.log(`\n  ${untagged} papers carry no topic, ${multi} carry more than one`);
 
 const types = papers.reduce((acc, p) => {
   const c = p.decisions.contribution_type?.choice;
