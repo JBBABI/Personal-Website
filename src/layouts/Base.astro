@@ -14,7 +14,8 @@ const site = Astro.site ?? new URL('https://jeanbaptistebonvarlet.com');
 const canonical = new URL(localePath(lang, path), site).href;
 const altEn = new URL(localePath('en', path), site).href;
 const altFr = new URL(localePath('fr', path), site).href;
-const ogImage = new URL('/img/og.png', site).href;
+// Bump ?v= whenever og.png changes: social platforms cache previews by URL.
+const ogImage = new URL('/img/og.png?v=2', site).href;
 ---
 <!doctype html>
 <html lang={lang} data-theme="dark">
