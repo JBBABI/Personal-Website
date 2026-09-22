@@ -38,10 +38,10 @@ globalThis.fetch = async (url, opts) => {
     ok: true, status: 200,
     json: async () => ({ answers: {
       // Mid-band on purpose: must be routed to review, not silently guessed.
-      is_relevant:       { type: 'noul', noul: 0.55, confidence: 0.6 },
+      is_relevant:       { type: 'noul', noul: 0.55 },
       contribution_type: { type: 'choice', choice: 'position', confidence: 0.41,
                            probabilities: { position: 0.41, method: 0.3 } },
-      releases_code:     { type: 'noul', noul: 0.95, confidence: 0.93 },
+      releases_code:     { type: 'noul', noul: 0.95 },
     } }),
   };
 };
@@ -65,7 +65,8 @@ assert.equal(p.decisions.is_relevant.probability, 0.55, 'probability stored, not
 assert.equal(p.decisions.is_relevant.verdict, 'review', '0.55 sits mid-band → human decides');
 assert.equal(p.decisions.releases_code.verdict, 'yes', '0.95 clears the high threshold');
 assert.equal(p.decisions.contribution_type.verdict, 'review', 'confidence 0.41 below 0.6 → review');
-assert.equal(p.decisions.is_relevant.confidence, 0.6, 'noul confidence kept as a second axis');
+assert.ok(!('confidence' in p.decisions.is_relevant),
+  'nouls carry no confidence field — the live API returns {type, noul} only');
 assert.equal(p.decisions.is_relevant.version, 1, 'question version recorded for cache invalidation');
 
 const untouched = out.find((x) => x.arxiv_id === '2602.14690');

@@ -22,16 +22,19 @@
    text, and questions as an object keyed by id. An earlier guess at
    /v1/decisions with an array of questions returned 404.
 
-   Response shape, confirmed against the cookbook:
+   Response shape, confirmed against a live call:
 
-     { "answers": {
-         "intent":      { "type":"choice", "choice":"bug_frustration",
-                          "confidence":0.98, "probabilities":{...} },
-         "is_churning": { "type":"noul", "noul":0.95, "confidence":0.95 } } }
+     { "model": "jev-1.13.0",
+       "answers": {
+         "contribution_type": { "type":"choice", "choice":"method",
+                                "confidence":1, "probabilities":{...} },
+         "is_relevant":       { "type":"noul", "noul":0.92 } },
+       "usage": { "input_tokens":895, "output_tokens":101 } }
 
-   A noul's value lives in `noul`, not `probability`. The first real call still
-   prints the raw body once, so a future API change shows up immediately rather
-   than as silent undefineds.
+   A noul's value lives in `noul` and there is NO confidence field on it —
+   only choices carry one. The first real call still prints the raw body once,
+   so a future API change shows up immediately rather than as silent
+   undefineds.
    ========================================================================== */
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -83,13 +86,14 @@ function toJevQuestions(qs) {
 /** Turn a raw Jev answer into what gets stored, including the routing band. */
 function store(q, answer) {
   if (q.type === 'noul') {
-    // `noul` is P(yes). It carries its own confidence, which is a second axis:
-    // the value says what, the confidence says whether to act on it.
+    // `noul` is P(yes). Unlike a choice it carries no confidence field — the
+    // live API returns {type, noul} only, whatever the third-party cookbook
+    // shows — so the probability's own distance from the thresholds is the
+    // only uncertainty signal available here.
     const p = answer.noul;
     return {
       version: q.version,
       probability: p,
-      confidence: answer.confidence,
       // 'review' is the quality gate: anything Jev is unsure about becomes a
       // human decision instead of a confident guess.
       verdict: p >= q.thresholds.high ? 'yes' : p <= q.thresholds.low ? 'no' : 'review',
@@ -171,10 +175,12 @@ async function main() {
 
   let done = 0;
   let review = 0;
+  let inputTokens = 0;
 
   for (const paper of todo) {
     const qs = pending(paper);
     const result = await askJev(paper, qs);
+    inputTokens += result.usage?.input_tokens ?? 0;
 
     paper.decisions ??= {};
     for (const q of qs) {
@@ -192,6 +198,11 @@ async function main() {
 
   await writeFile(DATA, JSON.stringify(papers, null, 2) + '\n');
   console.log(`\nclassified ${done} papers. ${review} answers need your review.`);
+  if (inputTokens) {
+    // $0.042 per million input tokens, output free.
+    const cost = (inputTokens / 1e6) * 0.042;
+    console.log(`${inputTokens.toLocaleString()} input tokens · about $${cost.toFixed(4)}`);
+  }
 }
 
 main().catch((e) => {
