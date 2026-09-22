@@ -1,6 +1,16 @@
 name: Research — classify with Jev
 
-# Manual only: this one costs money, so it never fires on a push.
+# The ad-hoc classifier, for targeted runs: a specific sample, a specific
+# limit. The routine work is research-weekly.yml, which runs on a schedule and
+# classifies everything outstanding.
+#
+# This was once described as manual "because it costs money". Measured, the
+# whole 4,683-paper corpus is about $0.20 and a week of new papers about
+# $0.002, so cost is not the reason to keep a person in the loop and never
+# was. It stays manual because it is the tool you reach for when you want a
+# PARTICULAR subset — classifying the gold cohort, say — not because spending
+# is dangerous.
+#
 # Needs secret JEV_API_KEY. Set repo variable JEV_ENDPOINT only if the real
 # endpoint differs from the default in classify-jev.mjs.
 on:
