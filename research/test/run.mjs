@@ -20,6 +20,8 @@ const SUITES = [
   'backfill.test.mjs',
   'classify.test.mjs',
   'sample.test.mjs',
+  'retry.test.mjs',
+  'retry-fatal.test.mjs',
   'label.test.mjs',
   'score.test.mjs',
 ];

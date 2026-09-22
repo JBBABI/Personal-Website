@@ -38,7 +38,33 @@ artifacts with 30-day retention, so a decision could not outlive the run that
 paid for it and the per-question cache never had a file to cache into. Every
 classify run silently re-bought the whole corpus.
 
-## Running it
+## It runs itself
+
+`research-weekly.yml` fetches new arXiv papers every Monday, classifies
+everything without an answer, and commits both back. Nothing needs clicking.
+
+The workflow lives on `main` rather than on this branch, and has to: GitHub
+only fires `schedule` and `workflow_dispatch` for workflows on the default
+branch. That rule is not obvious and it fails silently — `research-classify`
+sat on this branch for a while with a `workflow_dispatch` trigger that could
+never fire, and nobody noticed because `research-fetch` next to it worked fine
+on its `push` trigger. The workflow runs on `main` but checks out and commits
+to `research-pipeline`.
+
+Cost is not a reason to gate any of this. Measured on the real corpus: ~400
+tokens of abstract plus ~613 of questions per paper, at $0.042 per million
+input tokens. The whole 4,683-paper backlog is **$0.20**; a week of new papers
+is **$0.002**, about ten cents a year. The guard against a runaway loop is
+`--max-spend` inside `classify-jev.mjs`, not a human.
+
+Transient failures are retried with backoff, honouring `Retry-After`. That is
+a scale problem rather than a reliability one: one request rarely fails, but
+across 4,683 sequential requests a 429 or a gateway blip is expected at least
+once, and the old code threw on the first. Unrecoverable failures — a bad key,
+a malformed question — deliberately fail fast instead, because retrying a 401
+five times only buries the real error under warnings in a log nobody reads.
+
+## Running it by hand
 
 ```bash
 node research/fetch-arxiv.mjs --max 400      # no key needed, arXiv is open
@@ -67,7 +93,9 @@ nothing. Store the boolean and every change of mind means re-paying for the
 whole corpus.
 
 **Decisions are cached per question version.** Bump a question's `version`
-when you reword it and only that question re-runs. Gold labels carry the
+when you reword it and only that question re-runs. This is also what makes an
+interrupted run safe to resume: a cron cut off at paper 4,000 commits what it
+bought, and the next run picks up from there rather than re-paying. Gold labels carry the
 version they were made against too, and `score.mjs` drops any label whose
 version no longer matches rather than scoring it against wording it never saw.
 

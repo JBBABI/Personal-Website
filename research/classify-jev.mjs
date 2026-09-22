@@ -60,6 +60,11 @@ const envOr = (name, fallback) => {
   return v === undefined || v.trim() === '' ? fallback : v.trim();
 };
 
+/* $0.042 per million input tokens; output is free. Named because the spend
+   guard and the run summary must never drift apart — a ceiling computed from
+   a stale price is a ceiling that does not hold. */
+const USD_PER_INPUT_TOKEN = 0.042 / 1e6;
+
 const ENDPOINT = envOr('JEV_ENDPOINT', 'https://api.typesafe.ai/v1/systemone');
 const MODEL = envOr('JEV_MODEL', 'jev-1.13.0');
 const KEY = process.env.JEV_API_KEY;
@@ -132,29 +137,93 @@ function store(q, answer) {
 
 let rawShapeShown = false;
 
-async function askJev(paper, qs) {
-  const res = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      state: stateOf(paper),
-      questions: toJevQuestions(qs),
-    }),
-  });
-  if (!res.ok) throw new Error(`Jev returned ${res.status}: ${await res.text()}`);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  const body = await res.json();
-  if (!rawShapeShown) {
-    // Print the first response verbatim. The response shape was not in the
-    // material this was written from, so this is how it gets confirmed rather
-    // than assumed a second time.
-    console.log('\n--- first raw response (confirming the shape) ---');
-    console.log(JSON.stringify(body, null, 2));
-    console.log('--- end raw response ---\n');
-    rawShapeShown = true;
+/* Base backoff delay. Overridable so the tests can exercise the retry path
+   without actually waiting half a minute. */
+const RETRY_BASE_MS = Number(envOr('JEV_RETRY_BASE_MS', '1000'));
+const MAX_ATTEMPTS = Number(envOr('JEV_MAX_ATTEMPTS', '5'));
+
+/* Which failures are worth trying again.
+
+   429 and 5xx are transient by definition — the server is telling you to come
+   back, not that the request was wrong. Everything else is not: a 401 is a bad
+   key and a 400 is a malformed question, and retrying either just burns the
+   run's time before failing with the same message. Distinguishing them matters
+   more than it looks, because a retried 401 five times over means the real
+   error arrives half a minute late and buried. */
+const isRetryable = (status) => status === 429 || (status >= 500 && status < 600);
+
+/** Honour Retry-After when the server sends one; it knows better than we do. */
+function retryAfterMs(res) {
+  const raw = res.headers?.get?.('retry-after');
+  if (!raw) return null;
+  const secs = Number(raw);
+  if (Number.isFinite(secs)) return secs * 1000;
+  const when = Date.parse(raw);              // the header may be an HTTP date
+  return Number.isNaN(when) ? null : Math.max(0, when - Date.now());
+}
+
+/**
+ * One classification request, retried on transient failures.
+ *
+ * This exists because the corpus is 4,683 papers and the run is unattended.
+ * A single request has a small chance of a 429 or a gateway blip; across
+ * thousands of sequential requests that stops being unlikely and becomes
+ * expected. Before this, any one of them threw and ended the run — the
+ * checkpointing meant no money was lost, but the job still died partway and
+ * needed a person to notice and restart it, which is exactly what automating
+ * this is supposed to remove.
+ */
+async function askJev(paper, qs) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let res;
+    try {
+      res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: MODEL,
+          state: stateOf(paper),
+          questions: toJevQuestions(qs),
+        }),
+      });
+    } catch (e) {
+      // A dropped connection is as transient as a 503 and must be retried the
+      // same way, or a single network hiccup ends a two-hour run.
+      lastError = e;
+      if (attempt === MAX_ATTEMPTS) throw e;
+      await sleep(RETRY_BASE_MS * 2 ** (attempt - 1));
+      continue;
+    }
+
+    if (res.ok) {
+      const body = await res.json();
+      if (!rawShapeShown) {
+        // Print the first response verbatim. The response shape was not in the
+        // material this was written from, so this is how it gets confirmed
+        // rather than assumed a second time.
+        console.log('\n--- first raw response (confirming the shape) ---');
+        console.log(JSON.stringify(body, null, 2));
+        console.log('--- end raw response ---\n');
+        rawShapeShown = true;
+      }
+      return body;
+    }
+
+    const text = await res.text();
+    lastError = new Error(`Jev returned ${res.status}: ${text}`);
+    if (!isRetryable(res.status) || attempt === MAX_ATTEMPTS) throw lastError;
+
+    const wait = retryAfterMs(res) ?? RETRY_BASE_MS * 2 ** (attempt - 1);
+    console.warn(`  ${paper.arxiv_id}: ${res.status}, retrying in ${Math.round(wait / 1000)}s ` +
+      `(attempt ${attempt}/${MAX_ATTEMPTS})`);
+    await sleep(wait);
   }
-  return body;
+
+  throw lastError;
 }
 
 /* A missing or non-numeric value silently became NaN, which classified
@@ -176,6 +245,12 @@ async function main() {
   const dryRun = args.includes('--dry-run');
   const limit = numArg(args, '--limit', Infinity);
   const sample = numArg(args, '--sample', null);
+  /* A ceiling, not a budget. The whole 4,683-paper corpus costs about $0.20,
+     so $5 is twenty-five times the largest legitimate run — high enough never
+     to interrupt real work, low enough that a loop caused by a bad version
+     bump or a corrupted cache stops on its own rather than billing all night
+     against an unattended cron. */
+  const maxSpend = numArg(args, '--max-spend', 5);
 
   if (!KEY && !dryRun) {
     console.error('JEV_API_KEY is not set. Use --dry-run to inspect payloads without calling out.');
@@ -240,6 +315,13 @@ async function main() {
 
   try {
     for (const paper of todo) {
+      const spent = inputTokens * USD_PER_INPUT_TOKEN;
+      if (spent >= maxSpend) {
+        console.warn(`\nstopping: spent about $${spent.toFixed(2)}, at the $${maxSpend} ceiling.`);
+        console.warn('Everything bought so far is saved. Raise --max-spend if this was expected.');
+        break;
+      }
+
       const qs = pending(paper);
       const result = await askJev(paper, qs);
       inputTokens += result.usage?.input_tokens ?? 0;
@@ -274,7 +356,7 @@ async function main() {
     `${scored ? `, ${scored} kept as scores` : ''}.`);
   if (inputTokens) {
     // $0.042 per million input tokens, output free.
-    const cost = (inputTokens / 1e6) * 0.042;
+    const cost = inputTokens * USD_PER_INPUT_TOKEN;
     console.log(`${inputTokens.toLocaleString()} input tokens · about $${cost.toFixed(4)}`);
   }
 }
