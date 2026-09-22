@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <opensearch:totalResults xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">2</opensearch:totalResults>
+  <entry>
+    <id>http://arxiv.org/abs/2606.05608v1</id>
+    <updated>2026-06-10T08:12:44Z</updated>
+    <published>2026-06-04T17:03:21Z</published>
+    <title>Agentic Software: How AI Agents Are
+  Restructuring the Software Paradigm</title>
+    <summary>  We argue that the emergence of AI agents &lt;systems where LLMs serve as the
+primary reasoning engine&gt; constitutes a restructuring of what software is.
+Code becomes an instrumental resource rather than the carrier of decision
+logic. Our implementation is available at https://github.com/example/agentic.
+</summary>
+    <author><name>Zhenfeng Cao</name></author>
+    <arxiv:comment xmlns:arxiv="http://arxiv.org/schemas/atom">24 pages, accepted at ICSE 2026</arxiv:comment>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2602.14690v3</id>
+    <updated>2026-03-01T09:00:00Z</updated>
+    <published>2026-02-20T11:00:00Z</published>
+    <title>Harness Engineering for Agentic AI Coding Tools: An Exploratory Study</title>
+    <summary>  An exploratory study of harness design for coding agents &amp; their failure
+modes across 12 teams.
+</summary>
+    <author><name>A. Researcher</name></author>
+    <author><name>B. Coauthor</name></author>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>
+</feed>
