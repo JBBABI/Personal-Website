@@ -17,11 +17,8 @@
    ========================================================================== */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT = join(HERE, 'data', 'papers.json');
+import { dirname } from 'node:path';
+import { PAPERS as OUT } from './paths.mjs';
 
 const API = 'http://export.arxiv.org/api/query';
 const RATE_LIMIT_MS = 3000;

@@ -10,6 +10,8 @@
     "check": "astro check",
     "research:fetch": "node research/fetch-arxiv.mjs",
     "research:classify": "node research/classify-jev.mjs",
+    "research:label": "node research/label.mjs",
+    "research:score": "node research/score.mjs",
     "research:test": "node research/test/run.mjs",
     "research:report": "node research/report.mjs"
   },

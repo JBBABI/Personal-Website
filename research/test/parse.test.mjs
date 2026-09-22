@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { PAPERS } from '../paths.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const xml = await readFile(join(HERE, 'fixture.xml'), 'utf8');
@@ -21,7 +22,7 @@ globalThis.fetch = async (url, opts) => {
 process.argv = [process.argv[0], 'fetch-arxiv.mjs', '--max', '100'];
 await import('../fetch-arxiv.mjs');  // top-level await inside: completes before returning
 
-const papers = JSON.parse(await readFile(join(HERE, '..', 'data', 'papers.json'), 'utf8'));
+const papers = JSON.parse(await readFile(PAPERS, 'utf8'));
 assert.equal(papers.length, 2, 'both entries parsed');
 
 const [first, second] = papers;

@@ -15,9 +15,12 @@
            node --env-file=.env research/classify-jev.mjs --limit 10
            node --env-file=.env research/classify-jev.mjs --limit 50 --sample 7
 
-   --sample seeds a deterministic shuffle so the papers picked are spread
-   across the corpus rather than all from the newest day. A gold set built
-   from one day's papers measures agreement on one day's topics.
+   --sample orders the corpus by a seeded hash of each paper's id, so the
+   papers picked are spread across the corpus rather than all from the newest
+   day. A gold set built from one day's papers measures agreement on one day's
+   topics. The order is keyed on identity, not position, so it survives new
+   papers arriving and papers already being classified — see sample.mjs for
+   why that distinction cost a sample.
 
    Env:    JEV_API_KEY   required for a real run
            JEV_ENDPOINT  override the default endpoint
@@ -43,12 +46,10 @@
    ========================================================================== */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
 import { questions } from './questions.ts';
-
-const HERE = dirname(fileURLToPath(import.meta.url));
-const DATA = join(HERE, 'data', 'papers.json');
+import { stableOrder } from './sample.mjs';
+import { PAPERS as DATA } from './paths.mjs';
 
 /* `??` is wrong for env vars: an unset variable and one set to the empty
    string both reach here, and .env.example plus an unset Actions variable
@@ -202,18 +203,13 @@ async function main() {
     process.exit(1);
   }
 
-  let candidates = papers.filter((p) => pending(p).length > 0);
+  // Order the WHOLE corpus first, then filter. Ordering the candidates instead
+  // makes the sample depend on how much has already been classified, so the
+  // same seed drew a different population on every run. See sample.mjs.
+  const ordered = sample === null ? papers : stableOrder(papers, sample);
+  const candidates = ordered.filter((p) => pending(p).length > 0);
 
   if (sample !== null) {
-    // Seeded so a given --sample value always picks the same papers: the gold
-    // set has to be reproducible, or re-measuring agreement measures a
-    // different sample instead of a changed filter.
-    let s = sample;
-    const rand = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
-    candidates = candidates
-      .map((p) => ({ p, k: rand() }))
-      .sort((a, b) => a.k - b.k)
-      .map((x) => x.p);
     console.log(`sampling across the corpus with seed ${sample}`);
   }
 

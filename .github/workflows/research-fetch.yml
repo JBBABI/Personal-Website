@@ -14,14 +14,23 @@ on:
         description: 'Maximum papers to fetch'
         default: '400'
 
+# Needed to commit the corpus back. The corpus is the database — see below.
 permissions:
-  contents: read
+  contents: write
+
+# Both research workflows push to this branch. Without a shared concurrency
+# group a fetch and a classify can race and one loses its commit.
+concurrency:
+  group: research-data-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: research-pipeline
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -50,8 +59,21 @@ jobs:
               .forEach(([c,n]) => console.log("  " + c + "  " + n));
           ' | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: papers
-          path: research/data/papers.json
-          retention-days: 30
+      # The corpus is committed, not kept as an artifact. It used to be
+      # uploaded with 30-day retention and nothing else, which meant every
+      # classification expired: a paid-for decision could not outlive the run
+      # that bought it, and the per-question version cache — the whole reason
+      # retuning is cheap — never survived to be used. Committing also gives
+      # the audit trail the README promises, because a changed classification
+      # then shows up as a reviewable diff.
+      - name: Commit the corpus
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/data/papers.json
+          if git diff --staged --quiet; then
+            echo "corpus unchanged, nothing to commit"
+          else
+            git commit -m "Update arXiv corpus"
+            git push origin HEAD:research-pipeline
+          fi

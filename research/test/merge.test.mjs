@@ -5,9 +5,10 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { PAPERS } from '../paths.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DATA = join(HERE, '..', 'data', 'papers.json');
+const DATA = PAPERS;
 
 // Seed a corpus where both papers already carry decisions.
 await mkdir(dirname(DATA), { recursive: true });

@@ -10,10 +10,7 @@
    ========================================================================== */
 
 import { readFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const DATA = join(dirname(fileURLToPath(import.meta.url)), 'data', 'papers.json');
+import { PAPERS as DATA } from './paths.mjs';
 const args = process.argv.slice(2);
 
 const bar = (p) => {
