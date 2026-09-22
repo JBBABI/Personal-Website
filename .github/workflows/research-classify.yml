@@ -1,0 +1,78 @@
+name: Research — classify with Jev
+
+# Manual only: this one costs money, so it never fires on a push.
+# Needs secret JEV_API_KEY. Set repo variable JEV_ENDPOINT only if the real
+# endpoint differs from the default in classify-jev.mjs.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Papers to classify (keep small for a first run)'
+        default: '10'
+      sample:
+        description: 'Seed for spreading the sample across the corpus (blank = newest first)'
+        default: '7'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-data-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research-pipeline
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Deliberately does NOT re-fetch. This step used to rebuild the corpus
+      # from scratch on every run, which threw away every decision already
+      # paid for and re-bought them — the caching in classify-jev.mjs could
+      # never fire, because the file it caches into was always new. Run the
+      # fetch workflow when the corpus should grow; this one only spends money
+      # on papers that do not yet have an answer.
+      - name: Check the corpus is there
+        run: |
+          test -f research/data/papers.json || {
+            echo "No corpus committed. Run the 'Research — fetch arXiv' workflow first."
+            exit 1
+          }
+          node -e 'const p=require("./research/data/papers.json");
+            const done=p.filter(x=>Object.keys(x.decisions||{}).length).length;
+            console.log(`corpus: ${p.length} papers, ${done} already carry decisions`)'
+
+      - name: Show the payload before spending anything
+        run: node research/classify-jev.mjs --dry-run
+
+      - name: Classify
+        env:
+          JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
+          JEV_ENDPOINT: ${{ vars.JEV_ENDPOINT }}
+        run: |
+          node research/classify-jev.mjs \
+            --limit "${{ inputs.limit || '10' }}" \
+            ${{ inputs.sample && format('--sample {0}', inputs.sample) || '' }}
+
+      - name: What came back
+        run: node research/report.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # Committed for the same reason the corpus is: these decisions were paid
+      # for, and an artifact that expires in 30 days cannot be the database.
+      - name: Commit the decisions
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/data/papers.json
+          if git diff --staged --quiet; then
+            echo "no new decisions to commit"
+          else
+            git commit -m "Classify papers with Jev"
+            git push origin HEAD:research-pipeline
+          fi
