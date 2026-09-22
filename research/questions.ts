@@ -30,7 +30,21 @@ interface Noul {
   /** Stated as a claim about the paper, not as a question. */
   claim: string;
   /** Above `high` is auto-yes, below `low` is auto-no, between routes to a human. */
-  thresholds: { low: number; high: number };
+  thresholds?: { low: number; high: number };
+  /**
+   * Continuous properties are kept as a score and never bucketed.
+   *
+   * Some claims have no binary answer. "Is this about harnesses" is one:
+   * nearly every agent paper touches its harness to some degree, so the
+   * honest answer is a position on a range, and forcing it through thresholds
+   * manufactures an "unsure" verdict out of a perfectly good number.
+   *
+   * Questions about subject matter (security, memory, evaluation) bucket
+   * cleanly. Questions about components nearly every agent has do not. Set
+   * this when the spread across the corpus is the answer rather than noise;
+   * the page exposes it as a slider.
+   */
+  continuous?: true;
 }
 
 /** Pick one option. Jev returns the choice plus a probability per option. */
@@ -113,7 +127,12 @@ export const questions = [
   {
     id: 'topic_harness',
     type: 'noul',
-    version: 2,
+    version: 3,
+    // Two wordings, and the review rate went UP: 36% at v1, 40% at v2 with a
+    // sharper subject/instrument distinction. That is not an ambiguous claim,
+    // it is a claim with no binary answer — nearly every agent paper touches
+    // its harness somewhat. Kept as a score; the spread IS the information.
+    // Compare topic_security, which buckets cleanly on the same thresholds.
     // v1 put 17 of 40 in the review band — more unsure than confident. It
     // described the harness broadly enough that any paper with an agent in it
     // half-matched. v2 adds the distinction that was missing: designing or
@@ -125,7 +144,7 @@ export const questions = [
       'prompts, defines its action space, routes its tools or runs its control ' +
       'loop. Merely using a harness to accomplish some other task does not ' +
       'count.',
-    thresholds: { low: 0.3, high: 0.7 },
+    continuous: true,
   },
   {
     id: 'topic_memory',
@@ -150,7 +169,9 @@ export const questions = [
   {
     id: 'topic_tool_use',
     type: 'noul',
-    version: 2,
+    version: 3,
+    // Same shape as topic_harness: almost every agent calls a tool, so
+    // "is this about tool use" is a degree rather than a fact. Scored.
     // Same failure as harness at v1: 10 of 40 unsure, because almost every
     // agent calls a tool at some point. The subject/instrument distinction is
     // what makes it answerable.
@@ -159,7 +180,7 @@ export const questions = [
       'tool interface design, protocols such as MCP, or handling tool errors ' +
       'and outputs. An agent that simply happens to use tools while doing ' +
       'something else does not count.',
-    thresholds: { low: 0.3, high: 0.7 },
+    continuous: true,
   },
   {
     id: 'topic_multi_agent',

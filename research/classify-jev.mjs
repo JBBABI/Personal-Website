@@ -99,6 +99,13 @@ function toJevQuestions(qs) {
 
 /** Turn a raw Jev answer into what gets stored, including the routing band. */
 function store(q, answer) {
+  if (q.type === 'noul' && q.continuous) {
+    // No verdict by design. The value is the answer; bucketing a continuous
+    // property invents an "unsure" band out of a perfectly good number and
+    // throws away the ordering the page wants for its slider.
+    return { version: q.version, probability: answer.noul, continuous: true };
+  }
+
   if (q.type === 'noul') {
     // `noul` is P(yes). Unlike a choice it carries no confidence field — the
     // live API returns {type, noul} only, whatever the third-party cookbook
@@ -230,6 +237,7 @@ async function main() {
 
   let done = 0;
   let review = 0;
+  let scored = 0;
   let inputTokens = 0;
 
   const save = () => writeFile(DATA, JSON.stringify(papers, null, 2) + '\n');
@@ -252,6 +260,7 @@ async function main() {
         }
         paper.decisions[q.id] = store(q, answer);
         if (paper.decisions[q.id].verdict === 'review') review++;
+        if (paper.decisions[q.id].continuous) scored++;
       }
       done++;
       // Checkpoint as we go. One 429 mid-run used to discard everything
@@ -265,7 +274,8 @@ async function main() {
     // Runs on the error path too, so a failed run keeps what it bought.
     await save();
   }
-  console.log(`\nclassified ${done} papers. ${review} answers need your review.`);
+  console.log(`\nclassified ${done} papers. ${review} answers need your review` +
+    `${scored ? `, ${scored} kept as scores` : ''}.`);
   if (inputTokens) {
     // $0.042 per million input tokens, output free.
     const cost = (inputTokens / 1e6) * 0.042;

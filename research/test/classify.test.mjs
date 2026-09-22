@@ -91,6 +91,15 @@ assert.ok(!('confidence' in p.decisions.is_relevant),
   'nouls carry no confidence field — the live API returns {type, noul} only');
 assert.equal(p.decisions.is_relevant.version, 1, 'question version recorded for cache invalidation');
 
+// Continuous questions keep the value and get no verdict: bucketing a
+// property that has no binary answer manufactures an "unsure" band.
+assert.equal(p.decisions.topic_harness.continuous, true);
+assert.equal(typeof p.decisions.topic_harness.probability, 'number');
+assert.ok(!('verdict' in p.decisions.topic_harness),
+  'a scored question has no verdict to disagree with');
+assert.equal(p.decisions.topic_security.verdict, 'yes',
+  'subject-matter topics still bucket');
+
 const untouched = out.find((x) => x.arxiv_id === '2602.14690');
 assert.equal(untouched.decisions.is_relevant.probability, 0.91, 'already-paid-for answers kept');
 assert.equal(untouched.decisions.topic_security.verdict, 'yes', 'new topics added alongside');

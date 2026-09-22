@@ -49,11 +49,18 @@ if (args.includes('--relevant')) shown = shown.filter((p) => p.decisions.is_rele
 if (shown.length === 0) console.log('No papers match those filters.');
 
 const TOPICS = ['security', 'harness', 'memory', 'evaluation', 'tool_use', 'multi_agent'];
+const SCORED = ['harness', 'tool_use'];   // continuous: shown as values, never tagged
 
 /** Topics a paper carries, as short tags. Overlap is expected and kept. */
 const topicsOf = (d) => TOPICS
-  .filter((t) => d[`topic_${t}`]?.verdict === 'yes')
+  .filter((t) => !SCORED.includes(t) && d[`topic_${t}`]?.verdict === 'yes')
   .map((t) => t.replace('_', '-'));
+
+/** Continuous topics print as numbers — there is no yes/no to print. */
+const scoresOf = (d) => SCORED
+  .map((t) => [t, d[`topic_${t}`]?.probability])
+  .filter(([, v]) => v !== undefined)
+  .map(([t, v]) => `${t.replace('_', '-')} ${v.toFixed(2)}`);
 
 for (const p of shown) {
   const d = p.decisions;
@@ -61,7 +68,8 @@ for (const p of shown) {
   const type = d.contribution_type ?? {};
   const code = d.releases_code ?? {};
   const tags = topicsOf(d);
-  const unsure = TOPICS.filter((t) => d[`topic_${t}`]?.verdict === 'review');
+  const unsure = TOPICS.filter((t) => !SCORED.includes(t) && d[`topic_${t}`]?.verdict === 'review');
+  const scores = scoresOf(d);
   const asked = TOPICS.some((t) => d[`topic_${t}`] !== undefined);
 
   console.log(`\n${p.title}`);
@@ -71,6 +79,7 @@ for (const p of shown) {
   console.log(`  code      ${bar(code.probability)} ${String(code.probability ?? '?').padEnd(5)} ${code.verdict ?? ''}`);
   const topicLine = !asked ? 'not asked yet' : tags.length ? tags.join(' · ') : 'none';
   console.log(`  topics    ${topicLine}${unsure.length ? `   unsure: ${unsure.join(' ')}` : ''}`);
+  if (scores.length) console.log(`  scores    ${scores.join('   ')}`);
 }
 
 /* The distributions matter more than any single row: they say whether the
@@ -91,7 +100,7 @@ for (const id of ['is_relevant', 'contribution_type', 'releases_code']) {
 /* How often each topic fires. A topic that never fires is dead weight; one
    that fires on everything is not discriminating. Both are worth seeing. */
 console.log('');
-for (const t of TOPICS) {
+for (const t of TOPICS.filter((x) => !SCORED.includes(x))) {
   const c = counts(`topic_${t}`);
   const yes = c.yes ?? 0;
   const review = c.review ?? 0;
@@ -106,6 +115,20 @@ for (const t of TOPICS) {
   console.log(
     `  topic ${t.padEnd(12)} ${String(yes).padStart(3)}/${String(answered).padEnd(3)} ${String(pct).padStart(3)}% yes` +
     `   ${String(reviewPct).padStart(3)}% unsure${flag}`);
+}
+
+/* Scored topics get a distribution instead of a rate: the shape of the
+   spread is what says whether the score discriminates at all. */
+for (const t of SCORED) {
+  const vals = papers.map((p) => p.decisions[`topic_${t}`]?.probability)
+    .filter((v) => v !== undefined).sort((a, b) => a - b);
+  if (!vals.length) continue;
+  const at = (q) => vals[Math.floor((vals.length - 1) * q)].toFixed(2);
+  const bins = [0, 0, 0, 0, 0];
+  for (const v of vals) bins[Math.min(4, Math.floor(v * 5))]++;
+  const spark = bins.map((n) => '▁▂▄▆█'[Math.min(4, Math.round((n / Math.max(...bins)) * 4))]).join('');
+  console.log(`  score ${t.padEnd(12)} ${vals.length} values  ${spark}  ` +
+    `p25 ${at(0.25)}  median ${at(0.5)}  p75 ${at(0.75)}`);
 }
 
 const asked = papers.filter((p) => TOPICS.some((t) => p.decisions[`topic_${t}`] !== undefined));
