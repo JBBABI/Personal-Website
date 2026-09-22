@@ -6,8 +6,8 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { useTranslations, localePath, type Lang } from '../i18n/ui';
 
-interface Props { lang: Lang; path?: string; title?: string; description?: string; }
-const { lang, path = '/', title, description } = Astro.props;
+interface Props { lang: Lang; path?: string; title?: string; description?: string; noindex?: boolean; }
+const { lang, path = '/', title, description, noindex = false } = Astro.props;
 const t = useTranslations(lang);
 
 /* A page may name itself. Without this every route shared the homepage's
@@ -20,7 +20,8 @@ const site = Astro.site ?? new URL('https://jeanbaptistebonvarlet.com');
 const canonical = new URL(localePath(lang, path), site).href;
 const altEn = new URL(localePath('en', path), site).href;
 const altFr = new URL(localePath('fr', path), site).href;
-const ogImage = new URL('/img/og.png', site).href;
+// Bump ?v= whenever og.png changes: social platforms cache previews by URL.
+const ogImage = new URL('/img/og.png?v=2', site).href;
 ---
 <!doctype html>
 <html lang={lang} data-theme="dark">
@@ -30,12 +31,20 @@ const ogImage = new URL('/img/og.png', site).href;
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc} />
 
-    <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="en" href={altEn} />
-    <link rel="alternate" hreflang="fr" href={altFr} />
-    <link rel="alternate" hreflang="x-default" href={altEn} />
+    {noindex ? (
+      <meta name="robots" content="noindex, follow" />
+    ) : (
+      <Fragment>
+        <link rel="canonical" href={canonical} />
+        <link rel="alternate" hreflang="en" href={altEn} />
+        <link rel="alternate" hreflang="fr" href={altFr} />
+        <link rel="alternate" hreflang="x-default" href={altEn} />
+      </Fragment>
+    )}
 
-    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#0B0B0C" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#EDEDE8" media="(prefers-color-scheme: light)" />
 
