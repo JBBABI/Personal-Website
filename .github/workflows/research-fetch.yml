@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       max:
-        description: 'Maximum papers to fetch'
-        default: '400'
+        description: 'Maximum papers to fetch (blank = decide from what is stored)'
+        required: false
 
 # Needed to commit the corpus back. The corpus is the database — see below.
 permissions:
@@ -35,8 +35,27 @@ jobs:
         with:
           node-version: 22
 
+      # Depth is chosen from what is already stored rather than fixed.
+      #
+      # The two cases genuinely differ. A thin corpus needs backfilling across
+      # the whole field — arXiv reports ~4,700 papers matching the seed terms,
+      # and a gold set drawn from only the newest 400 samples about one month
+      # of it, which would measure agreement on one month's topics and publish
+      # it as the index's error rate. A full corpus needs only the newest
+      # papers, because fetch-arxiv merges and never drops what it already has.
+      #
+      # Deciding here rather than passing --max by hand also means a corpus
+      # lost to a fresh checkout repairs itself on the next push, instead of
+      # waiting for someone to notice it is short.
       - name: Fetch candidates from arXiv
-        run: node research/fetch-arxiv.mjs --max "${{ inputs.max || '400' }}"
+        run: |
+          have=$(node -e 'try { console.log(require("./research/data/papers.json").length) } catch { console.log(0) }')
+          max="${{ inputs.max }}"
+          if [ -z "$max" ]; then
+            if [ "$have" -lt 2000 ]; then max=5000; else max=400; fi
+          fi
+          echo "corpus holds $have papers; fetching up to $max"
+          node research/fetch-arxiv.mjs --max "$max"
 
       - name: Summarise what came back
         run: |
