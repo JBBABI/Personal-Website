@@ -125,6 +125,31 @@ cyberpunk stock template". All of them are banned:
 
 ---
 
+## The mark — "Slot"
+
+One solid block with a single horizontal slit in its lower third. A sealed
+device with one way in: a card reader, an access port. It is the brief
+reduced to a glyph — something you are not supposed to open.
+
+- **Geometry.** Drawn on a 16-unit pixel grid so it stays crisp at 16px and
+  32px: block 14×14 at (1,1), corner radius 1; slit 8×2 at (4,10). Do not
+  redraw it — copy the path from `public/favicon.svg`.
+- **Colour.** One neutral only: off-white on dark, matt black on light. The
+  slit is a true cut-out, never a second colour. **Never amber** — the mark
+  is identity, not live state.
+- **Size.** 16px in the nav, next to the role label. Minimum 12px on screen.
+  Clear space on every side at least the slit's height (2 units).
+- **Don't** outline it, rotate it, add a glow or gradient, put a letter in
+  the slit, or set "JBB" beside it — the mark replaces the wordmark.
+
+| Asset                        | File                          |
+| ---------------------------- | ----------------------------- |
+| Master + favicon (auto theme)| `public/favicon.svg`          |
+| PNG fallback, 32px tile      | `public/favicon.png`          |
+| iOS home screen, 180px       | `public/apple-touch-icon.png` |
+
+---
+
 ## Applying it elsewhere
 
 Making a slide, a social card or a header that should match:
@@ -136,7 +161,7 @@ Making a slide, a social card or a header that should match:
 4. Hard edges. A single 1px rule does more work than any graphic.
 5. Leave it emptier than feels comfortable.
 
-`public/img/og.png` is the reference execution — asset tag top-left, one
+`public/img/og.png` is the reference execution — mark and role top-left, one
 statement, a hairline, and a single amber dot. Copy its restraint.
 
 ---
