@@ -12,7 +12,7 @@ on:
     inputs:
       max:
         description: 'Maximum papers to fetch'
-        default: '200'
+        default: '400'
 
 permissions:
   contents: read
@@ -27,7 +27,7 @@ jobs:
           node-version: 22
 
       - name: Fetch candidates from arXiv
-        run: node research/fetch-arxiv.mjs --max "${{ inputs.max || '200' }}"
+        run: node research/fetch-arxiv.mjs --max "${{ inputs.max || '400' }}"
 
       - name: Summarise what came back
         run: |

@@ -107,9 +107,17 @@ async function fetchPage(start, max) {
   if (!res.ok) throw new Error(`arXiv returned ${res.status} ${res.statusText}`);
 
   const xml = await res.text();
-  return [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)]
+  // arXiv reports how many papers match in total, not just how many were
+  // returned. Worth surfacing: it tells you the size of the field before you
+  // decide how much of it to pull down.
+  const totalMatch = xml.match(/<opensearch:totalResults[^>]*>(\d+)</);
+  const total = totalMatch ? Number(totalMatch[1]) : null;
+
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)]
     .map((m) => parseEntry(m[1]))
     .filter(Boolean);
+
+  return { entries, total };
 }
 
 async function loadExisting() {
@@ -133,7 +141,13 @@ async function main() {
   let revised = 0;
 
   for (let start = 0; start < max; start += PAGE_SIZE) {
-    const batch = await fetchPage(start, Math.min(PAGE_SIZE, max - start));
+    const { entries: batch, total } = await fetchPage(start, Math.min(PAGE_SIZE, max - start));
+    if (start === 0 && total !== null) {
+      console.log(`arXiv reports ${total} papers matching the seed terms in total`);
+      if (total > max) {
+        console.log(`  fetching the ${max} most recent; raise --max to go deeper`);
+      }
+    }
     if (batch.length === 0) break;
 
     for (const paper of batch) {
