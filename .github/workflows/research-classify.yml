@@ -1,0 +1,62 @@
+name: Research — classify with Jev
+
+# Manual only: this one costs money, so it never fires on a push.
+# Needs secret JEV_API_KEY. Set repo variable JEV_ENDPOINT only if the real
+# endpoint differs from the default in classify-jev.mjs.
+on:
+  workflow_dispatch:
+    inputs:
+      fetch_max:
+        description: 'Papers to fetch before classifying'
+        default: '50'
+      limit:
+        description: 'Papers to classify (keep small for a first run)'
+        default: '10'
+
+permissions:
+  contents: read
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The corpus is gitignored, so it is rebuilt here rather than stored.
+      - name: Fetch corpus
+        run: node research/fetch-arxiv.mjs --max "${{ inputs.fetch_max }}"
+
+      - name: Show the payload before spending anything
+        run: node research/classify-jev.mjs --dry-run
+
+      - name: Classify
+        env:
+          JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
+          JEV_ENDPOINT: ${{ vars.JEV_ENDPOINT }}
+        run: node research/classify-jev.mjs --limit "${{ inputs.limit }}"
+
+      - name: What came back
+        run: |
+          node -e '
+            const p = require("./research/data/papers.json")
+              .filter(x => Object.keys(x.decisions || {}).length);
+            console.log("classified:", p.length, "\n");
+            for (const x of p) {
+              const d = x.decisions;
+              console.log(`[${x.arxiv_id}] ${x.title.slice(0,70)}`);
+              console.log(`   relevant   ${d.is_relevant?.probability} (${d.is_relevant?.verdict})`);
+              console.log(`   type       ${d.contribution_type?.choice} @ ${d.contribution_type?.confidence} (${d.contribution_type?.verdict})`);
+              console.log(`   code       ${d.releases_code?.probability} (${d.releases_code?.verdict})\n`);
+            }
+            const review = p.filter(x => Object.values(x.decisions).some(d => d.verdict === "review"));
+            console.log(`${review.length}/${p.length} need human review`);
+          ' | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: classified
+          path: research/data/papers.json
+          retention-days: 30
