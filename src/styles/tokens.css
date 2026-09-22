@@ -49,7 +49,7 @@
   --hairline: 1px;
   --measure: 62ch;            /* prose line length ceiling */
   --gutter: clamp(1.25rem, 4vw, 3rem);
-  --maxw: 1180px;
+  --maxw: 720px;          /* one narrow measure: nav, content and footer share it */
 
   /* --- Motion: mechanical. Relays close, they don't bounce. -------------- */
   --t-fast: 90ms;
@@ -111,6 +111,9 @@ html {
 }
 
 body {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
   background: var(--surface-0);
   color: var(--text);
   font-family: var(--font-sans);
@@ -120,6 +123,8 @@ body {
   text-rendering: optimizeLegibility;
   font-feature-settings: "cv05" 1, "ss03" 1;
 }
+
+main { flex: 1 0 auto; }
 
 img, svg, video { display: block; max-width: 100%; height: auto; }
 button, input, textarea, select { font: inherit; color: inherit; }

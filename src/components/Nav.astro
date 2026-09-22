@@ -4,12 +4,6 @@ interface Props { lang: Lang; path?: string; }
 const { lang, path = '/' } = Astro.props;
 const t = useTranslations(lang);
 
-const items = [
-  { href: '#systems', key: 'nav.systems' as const },
-  { href: '#trace',   key: 'nav.trace' as const },
-  { href: '#record',  key: 'nav.record' as const },
-  { href: '#contact', key: 'nav.contact' as const },
-];
 ---
 <header class="nav">
   <div class="wrap nav__in">
@@ -19,9 +13,6 @@ const items = [
       <span class="mark__role label">{t('hero.role')}</span>
     </a>
 
-    <nav class="nav__links" aria-label="Primary">
-      {items.map(i => <a class="nav__link label" href={i.href}>{t(i.key)}</a>)}
-    </nav>
 
     <div class="nav__tools">
       <div class="lang" role="group" aria-label="Language">
@@ -63,12 +54,6 @@ const items = [
   .mark__role { transition: color var(--t-fast) var(--ease); }
   .mark:hover .mark__role { color: var(--text-dim); }
 
-  .nav__links { display: flex; gap: var(--s-5); }
-  .nav__link {
-    color: var(--text-dim);
-    transition: color var(--t-fast) var(--ease);
-  }
-  .nav__link:hover, .nav__link:focus-visible { color: var(--text); }
 
   .nav__tools { display: flex; align-items: center; gap: var(--s-3); }
 
@@ -93,7 +78,6 @@ const items = [
   .tgl:hover { color: var(--text); border-color: var(--line-bright); }
 
   @media (max-width: 720px) {
-    .nav__links { display: none; }
     .mark__sep, .mark__role { display: none; }
   }
 </style>
