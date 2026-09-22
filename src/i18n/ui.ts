@@ -16,12 +16,9 @@ export const ui = {
     'now.updated': 'Updated',
 
     'contact.label': 'Elsewhere',
-    'contact.email':    'Email',
     'contact.linkedin': 'LinkedIn',
-    'contact.github':   'GitHub',
 
     'footer.built':  'Built with Astro. No trackers, no cookies, no analytics.',
-    'footer.source': 'Source',
     'theme.toggle':  'Toggle colour scheme',
   },
 
@@ -38,12 +35,9 @@ export const ui = {
     'now.updated': 'Mis à jour',
 
     'contact.label': 'Ailleurs',
-    'contact.email':    'Email',
     'contact.linkedin': 'LinkedIn',
-    'contact.github':   'GitHub',
 
     'footer.built':  'Construit avec Astro. Aucun traqueur, aucun cookie, aucune analytique.',
-    'footer.source': 'Code source',
     'theme.toggle':  'Changer de thème',
   },
 } as const;
