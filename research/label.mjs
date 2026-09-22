@@ -30,7 +30,7 @@
    disk as it is given. Killing the process loses at most the paper on screen.
    ========================================================================== */
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { createInterface } from 'node:readline';
 import { questions } from './questions.ts';
@@ -341,7 +341,22 @@ async function main() {
   };
 
   await mkdir(dirname(GOLD), { recursive: true });
-  const save = () => writeFile(GOLD, JSON.stringify(gold, null, 2) + '\n');
+
+  /* Written to a sibling file and renamed, rather than written in place.
+     rename is atomic within a filesystem, so gold.json is always either the
+     previous complete version or the new complete one — never half of either.
+
+     In-place writes are fine for data you can regenerate. These labels are
+     hours of a person's attention and cannot be rebuilt at any price, and the
+     save runs after every single answer, which is the worst possible exposure
+     to a Ctrl-C landing mid-write. loadGold refuses to overwrite a file it
+     cannot parse, so a truncated write would not silently lose the labels —
+     it would just leave them unreadable, which is not much better. */
+  const save = async () => {
+    const tmp = `${GOLD}.tmp`;
+    await writeFile(tmp, JSON.stringify(gold, null, 2) + '\n');
+    await rename(tmp, GOLD);
+  };
 
   let labelled = 0;
   let stopped = false;

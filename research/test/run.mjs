@@ -17,6 +17,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SUITES = [
   'parse.test.mjs',
   'merge.test.mjs',
+  'backfill.test.mjs',
   'classify.test.mjs',
   'sample.test.mjs',
   'label.test.mjs',
