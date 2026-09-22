@@ -5,10 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node research/build-index.mjs && astro build",
     "preview": "astro preview",
     "check": "astro check",
     "research:fetch": "node research/fetch-arxiv.mjs",
+    "research:index": "node research/build-index.mjs",
     "research:classify": "node research/classify-jev.mjs",
     "research:label": "node research/label.mjs",
     "research:score": "node research/score.mjs",

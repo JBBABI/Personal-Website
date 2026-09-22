@@ -14,6 +14,11 @@ const t = useTranslations(lang);
     </a>
 
 
+    <nav class="nav__links" aria-label="Sections">
+      <a class="nav__link label" href={localePath(lang, '/research')}
+         aria-current={path === '/research' ? 'page' : undefined}>{t('nav.research')}</a>
+    </nav>
+
     <div class="nav__tools">
       <div class="lang" role="group" aria-label="Language">
         <a class="lang__opt" href={localePath('en', path)} hreflang="en"
@@ -54,6 +59,11 @@ const t = useTranslations(lang);
   .mark__role { transition: color var(--t-fast) var(--ease); }
   .mark:hover .mark__role { color: var(--text-dim); }
 
+
+  .nav__links { display: flex; align-items: center; gap: var(--s-4); margin-right: var(--s-4); }
+  .nav__link { color: var(--text-faint); transition: color var(--t-fast) var(--ease); }
+  .nav__link:hover { color: var(--text); }
+  .nav__link[aria-current="page"] { color: var(--text); }
 
   .nav__tools { display: flex; align-items: center; gap: var(--s-3); }
 

@@ -6,6 +6,18 @@ export const ui = {
   en: {
     'nav.skipToMain': 'Skip to content',
 
+    'nav.research': 'Research',
+    'research.title': 'Research index',
+    'research.lede': 'Every arXiv paper matching a fixed set of agentic-engineering terms, tagged so you can filter them. Not a best-of list — no ranking, no editorial.',
+    'research.papers': 'papers',
+    'research.updated': 'updated',
+    'research.filterLabel': 'Filter by topic',
+    'research.clear': 'clear',
+    'research.more': 'Show more',
+    'research.unsure': 'unsure',
+    'research.unsureHint': 'The classifier could not confidently place this paper in or out of scope.',
+    'research.note': 'Tags are assigned by a classifier, not by hand, and their accuracy has not been measured yet. Treat them as a way to narrow the list, not as fact.',
+
     'meta.title':       'Jean-Baptiste Bonvarlet',
     'meta.description': 'Jean-Baptiste Bonvarlet. From marketing to AI engineering. I build tools for power and land projects: Power Scout and the R&B Power platform.',
 
@@ -24,6 +36,18 @@ export const ui = {
 
   fr: {
     'nav.skipToMain': 'Aller au contenu',
+
+    'nav.research': 'Recherche',
+    'research.title': 'Index de recherche',
+    'research.lede': "Tous les articles arXiv correspondant à une liste fixe de termes liés à l'ingénierie agentique, étiquetés pour que vous puissiez les filtrer. Pas une sélection — aucun classement, aucun éditorial.",
+    'research.papers': 'articles',
+    'research.updated': 'mis à jour',
+    'research.filterLabel': 'Filtrer par sujet',
+    'research.clear': 'effacer',
+    'research.more': 'Afficher plus',
+    'research.unsure': 'incertain',
+    'research.unsureHint': "Le classifieur n'a pas pu déterminer avec certitude si cet article entre dans le périmètre.",
+    'research.note': "Les étiquettes sont attribuées par un classifieur, pas à la main, et leur exactitude n'a pas encore été mesurée. À utiliser pour restreindre la liste, pas comme un fait.",
 
     'meta.title':       'Jean-Baptiste Bonvarlet',
     'meta.description': "Jean-Baptiste Bonvarlet. Du marketing à l'ingénierie IA. Je construis des outils pour des projets d'énergie et de foncier : Power Scout, plateforme R&B Power.",
