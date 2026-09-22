@@ -13,6 +13,11 @@
 
    Usage:  JEV_API_KEY=… node research/classify-jev.mjs [--limit N] [--dry-run]
            node --env-file=.env research/classify-jev.mjs --limit 10
+           node --env-file=.env research/classify-jev.mjs --limit 50 --sample 7
+
+   --sample seeds a deterministic shuffle so the papers picked are spread
+   across the corpus rather than all from the newest day. A gold set built
+   from one day's papers measures agreement on one day's topics.
 
    Env:    JEV_API_KEY   required for a real run
            JEV_ENDPOINT  override the default endpoint
@@ -139,6 +144,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const limit = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : Infinity;
+  const sample = args.includes('--sample') ? Number(args[args.indexOf('--sample') + 1]) : null;
 
   if (!KEY && !dryRun) {
     console.error('JEV_API_KEY is not set. Use --dry-run to inspect payloads without calling out.');
@@ -155,7 +161,22 @@ async function main() {
   }
 
   const papers = JSON.parse(await readFile(DATA, 'utf8'));
-  const todo = papers.filter((p) => pending(p).length > 0).slice(0, limit);
+  let candidates = papers.filter((p) => pending(p).length > 0);
+
+  if (sample !== null) {
+    // Seeded so a given --sample value always picks the same papers: the gold
+    // set has to be reproducible, or re-measuring agreement measures a
+    // different sample instead of a changed filter.
+    let s = sample;
+    const rand = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+    candidates = candidates
+      .map((p) => ({ p, k: rand() }))
+      .sort((a, b) => a.k - b.k)
+      .map((x) => x.p);
+    console.log(`sampling across the corpus with seed ${sample}`);
+  }
+
+  const todo = candidates.slice(0, limit);
   console.log(`${todo.length} of ${papers.length} papers need classifying`);
 
   if (dryRun) {
