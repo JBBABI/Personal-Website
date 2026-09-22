@@ -1,0 +1,105 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+import { now } from '../data/now';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const current = now[lang];
+
+const links = [
+  { k: t('contact.email'),    v: 'bonvarletjeanbaptiste@gmail.com', href: 'mailto:bonvarletjeanbaptiste@gmail.com' },
+  { k: t('contact.linkedin'), v: '/in/jean-baptiste-bonvarlet',     href: 'https://www.linkedin.com/in/jean-baptiste-bonvarlet/' },
+  { k: t('contact.github'),   v: '@jbbabi',                          href: 'https://github.com/jbbabi' },
+];
+---
+<div class="wrap page">
+  <header class="id">
+    <h1 class="id__name">Jean-Baptiste&nbsp;Bonvarlet</h1>
+    <p class="label id__role">{t('hero.role')}</p>
+  </header>
+
+  <p class="prose intro">{t('hero.intro')}</p>
+
+  <section class="now" aria-labelledby="now-h">
+    <div class="now__head">
+      <h2 id="now-h" class="live now__label">{t('now.label')}</h2>
+      <span class="label now__when">{t('now.updated')} {current.updated}</span>
+    </div>
+    <ul class="now__list">
+      {current.lines.map(l => <li class="now__item">{l}</li>)}
+    </ul>
+  </section>
+
+  <section class="els" aria-labelledby="els-h">
+    <h2 id="els-h" class="label els__label">{t('contact.label')}</h2>
+    <dl class="els__list">
+      {links.map(l => (
+        <div class="els__row">
+          <dt class="label">{l.k}</dt>
+          <dd class="els__v">
+            <a class="link mono" href={l.href}
+               target={l.href.startsWith('http') ? '_blank' : undefined}
+               rel={l.href.startsWith('http') ? 'noopener noreferrer' : undefined}>{l.v}</a>
+          </dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+</div>
+
+<style>
+  .page {
+    padding-block: clamp(var(--s-7), 11vh, var(--s-9));
+    display: flex; flex-direction: column;
+    gap: var(--s-7);
+  }
+
+  /* ---------- identity ---------- */
+  .id__name {
+    font-size: clamp(1.75rem, 1.2rem + 2.2vw, 2.75rem);
+    margin-bottom: var(--s-3);
+  }
+  .id__role { color: var(--text-dim); }
+
+  .intro { font-size: var(--t-md); margin-top: calc(var(--s-7) * -0.45); }
+
+  /* ---------- now ---------- */
+  .now {
+    border: var(--hairline) solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-1);
+  }
+  .now__head {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3);
+    padding: var(--s-3) var(--s-4);
+    border-bottom: var(--hairline) solid var(--line);
+  }
+  .now__label { font-size: var(--t-xs); font-weight: 500; letter-spacing: 0.12em; }
+  .now__when { margin-left: auto; }
+
+  .now__list { list-style: none; margin: 0; padding: 0; }
+  .now__item {
+    padding: var(--s-3) var(--s-4);
+    font-size: var(--t-sm);
+    color: var(--text-dim);
+  }
+  .now__item + .now__item { border-top: var(--hairline) solid var(--line); }
+
+  /* ---------- elsewhere ---------- */
+  .els__label {
+    display: block; padding-bottom: var(--s-3);
+    border-bottom: var(--hairline) solid var(--line);
+  }
+  .els__list { margin: 0; }
+  .els__row {
+    display: grid; grid-template-columns: 5.5rem 1fr; gap: var(--s-4);
+    padding: var(--s-3) 0; align-items: baseline;
+    border-bottom: var(--hairline) solid var(--line);
+  }
+  .els__v { margin: 0; font-size: var(--t-sm); }
+
+  @media (max-width: 460px) {
+    .els__row { grid-template-columns: 1fr; gap: var(--s-1); }
+  }
+</style>

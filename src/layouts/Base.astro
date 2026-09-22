@@ -1,0 +1,71 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/tokens.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { useTranslations, localePath, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang; path?: string; }
+const { lang, path = '/' } = Astro.props;
+const t = useTranslations(lang);
+
+const site = Astro.site ?? new URL('https://jeanbaptistebonvarlet.com');
+const canonical = new URL(localePath(lang, path), site).href;
+const altEn = new URL(localePath('en', path), site).href;
+const altFr = new URL(localePath('fr', path), site).href;
+const ogImage = new URL('/img/og.png', site).href;
+---
+<!doctype html>
+<html lang={lang} data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t('meta.title')}</title>
+    <meta name="description" content={t('meta.description')} />
+
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={altEn} />
+    <link rel="alternate" hreflang="fr" href={altFr} />
+    <link rel="alternate" hreflang="x-default" href={altEn} />
+
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <meta name="theme-color" content="#0B0B0C" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#EDEDE8" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={t('meta.title')} />
+    <meta property="og:description" content={t('meta.description')} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={lang === 'fr' ? 'fr_FR' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Theme resolved before first paint. The only blocking script on the page. -->
+    <script is:inline>
+      (function () {
+        try {
+          var s = localStorage.getItem('theme');
+          var m = window.matchMedia('(prefers-color-scheme: light)').matches;
+          document.documentElement.setAttribute('data-theme', s || (m ? 'light' : 'dark'));
+        } catch (e) { /* private mode: keep the dark default */ }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">{t('nav.skipToMain')}</a>
+    <Nav lang={lang} path={path} />
+    <main id="main" tabindex="-1"><slot /></main>
+    <Footer lang={lang} />
+
+    <script>
+      const root = document.documentElement;
+      document.getElementById('theme-toggle')?.addEventListener('click', () => {
+        const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch (e) { /* ignore */ }
+      });
+    </script>
+  </body>
+</html>
