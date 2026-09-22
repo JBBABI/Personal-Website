@@ -4,25 +4,25 @@
    What you're working on right now. Keep it short and true — three or four
    lines. When something stops being current, delete it.
 
-   ⚠  The lines below are my placeholder guesses about you, not facts.
-      Replace them before this goes live.
+   Hard limit: 60–70 characters per line, checked in BOTH languages.
+   Longer wraps to two lines and breaks the rhythm of the block.
    ========================================================================== */
 
 export const now = {
   en: {
     updated: '2026-09',
     lines: [
-      'Building agents with Claude Code and the Anthropic API.',
-      'Learning evals — how you actually tell whether an agent works.',
-      'Writing up what I build, slowly.',
+      'Building Power Scout — grid analysis around a land site.',
+      'Shipping the R&B Power platform and its public site.',
+      'Moving from marketing into AI engineering.',
     ],
   },
   fr: {
     updated: '2026-09',
     lines: [
-      "Je construis des agents avec Claude Code et l'API Anthropic.",
-      "J'apprends l'évaluation — comment savoir si un agent fonctionne vraiment.",
-      'Je documente ce que je construis, doucement.',
+      "Je développe Power Scout — analyse du réseau autour d'un terrain.",
+      'Je livre la plateforme R&B Power et son site public.',
+      "Je passe du marketing à l'ingénierie IA.",
     ],
   },
 } as const;
