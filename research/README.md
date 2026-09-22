@@ -31,7 +31,7 @@ up as a reviewable diff.
 node research/fetch-arxiv.mjs --max 200      # no key needed, arXiv is open
 node research/classify-jev.mjs --dry-run     # inspect payloads, send nothing
 JEV_API_KEY=… node research/classify-jev.mjs
-node --test research/test/                   # all three suites, offline
+npm run research:test                        # all three suites, offline
 ```
 
 `fetch` and `classify` are both idempotent: re-running adds new papers and
@@ -118,13 +118,14 @@ Authorization: Bearer $JEV_API_KEY
 
 ```
 { "answers": {
-    "is_relevant":       { "type": "noul",   "noul": 0.95, "confidence": 0.95 },
+    "is_relevant":       { "type": "noul",   "noul": 0.95 },
     "contribution_type": { "type": "choice", "choice": "method",
                            "confidence": 0.98, "probabilities": { … } } } }
 ```
 
 Three things that are easy to get wrong: `questions` is an **object keyed by
-id**, not an array; a noul's value is in **`noul`**, not `probability`; and
+id**, not an array; a noul's value is in **`noul`**, not `probability`, and
+carries **no confidence field** (only choices do); and
 choice options are a **`criteria` map of name → description**, not a list of
 labels. The last is an improvement — an ambiguous option can be disambiguated
 in words rather than hoping the label carries it.

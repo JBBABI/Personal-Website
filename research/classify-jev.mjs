@@ -42,7 +42,7 @@
    undefineds.
    ========================================================================== */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { questions } from './questions.ts';
@@ -50,8 +50,17 @@ import { questions } from './questions.ts';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, 'data', 'papers.json');
 
-const ENDPOINT = process.env.JEV_ENDPOINT ?? 'https://api.typesafe.ai/v1/systemone';
-const MODEL = process.env.JEV_MODEL ?? 'jev-1.13.0';
+/* `??` is wrong for env vars: an unset variable and one set to the empty
+   string both reach here, and .env.example plus an unset Actions variable
+   both produce the latter. Empty must fall back, or every call dies with
+   "Failed to parse URL". */
+const envOr = (name, fallback) => {
+  const v = process.env[name];
+  return v === undefined || v.trim() === '' ? fallback : v.trim();
+};
+
+const ENDPOINT = envOr('JEV_ENDPOINT', 'https://api.typesafe.ai/v1/systemone');
+const MODEL = envOr('JEV_MODEL', 'jev-1.13.0');
 const KEY = process.env.JEV_API_KEY;
 
 /** Which questions does this paper still owe an answer to? */
@@ -140,11 +149,25 @@ async function askJev(paper, qs) {
   return body;
 }
 
+/* A missing or non-numeric value silently became NaN, which classified
+   nothing and still exited 0 — a no-op that looks like success. */
+function numArg(args, flag, fallback) {
+  const i = args.indexOf(flag);
+  if (i === -1) return fallback;
+  const raw = args[i + 1];
+  const n = Number(raw);
+  if (raw === undefined || raw.startsWith('--') || !Number.isFinite(n)) {
+    console.error(`${flag} needs a number, got ${raw === undefined ? 'nothing' : `"${raw}"`}`);
+    process.exit(1);
+  }
+  return n;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
-  const limit = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : Infinity;
-  const sample = args.includes('--sample') ? Number(args[args.indexOf('--sample') + 1]) : null;
+  const limit = numArg(args, '--limit', Infinity);
+  const sample = numArg(args, '--sample', null);
 
   if (!KEY && !dryRun) {
     console.error('JEV_API_KEY is not set. Use --dry-run to inspect payloads without calling out.');
@@ -160,7 +183,18 @@ async function main() {
     process.exit(1);
   }
 
-  const papers = JSON.parse(await readFile(DATA, 'utf8'));
+  await mkdir(dirname(DATA), { recursive: true });
+
+  let papers;
+  try {
+    papers = JSON.parse(await readFile(DATA, 'utf8'));
+  } catch (e) {
+    console.error(e.code === 'ENOENT'
+      ? 'No corpus yet. Run: node research/fetch-arxiv.mjs --max 400'
+      : `Could not read ${DATA}: ${e.message}`);
+    process.exit(1);
+  }
+
   let candidates = papers.filter((p) => pending(p).length > 0);
 
   if (sample !== null) {
@@ -198,26 +232,39 @@ async function main() {
   let review = 0;
   let inputTokens = 0;
 
-  for (const paper of todo) {
-    const qs = pending(paper);
-    const result = await askJev(paper, qs);
-    inputTokens += result.usage?.input_tokens ?? 0;
+  const save = () => writeFile(DATA, JSON.stringify(papers, null, 2) + '\n');
 
-    paper.decisions ??= {};
-    for (const q of qs) {
-      const answer = result.answers?.[q.id];
-      if (!answer) {
-        console.warn(`  ${paper.arxiv_id}: no answer for ${q.id}, left unclassified`);
-        continue;
+  try {
+    for (const paper of todo) {
+      const qs = pending(paper);
+      const result = await askJev(paper, qs);
+      inputTokens += result.usage?.input_tokens ?? 0;
+
+      paper.decisions ??= {};
+      for (const q of qs) {
+        const answer = result.answers?.[q.id];
+        if (!answer) {
+          console.warn(`  ${paper.arxiv_id}: no answer for ${q.id}, left unclassified`);
+          // A version bump with no answer must not leave the OLD answer in
+          // place looking current — drop it so it is retried, not reported.
+          delete paper.decisions[q.id];
+          continue;
+        }
+        paper.decisions[q.id] = store(q, answer);
+        if (paper.decisions[q.id].verdict === 'review') review++;
       }
-      paper.decisions[q.id] = store(q, answer);
-      if (paper.decisions[q.id].verdict === 'review') review++;
+      done++;
+      // Checkpoint as we go. One 429 mid-run used to discard everything
+      // already paid for.
+      if (done % 10 === 0) {
+        await save();
+        console.log(`  ${done}/${todo.length} …`);
+      }
     }
-    done++;
-    if (done % 25 === 0) console.log(`  ${done}/${todo.length} …`);
+  } finally {
+    // Runs on the error path too, so a failed run keeps what it bought.
+    await save();
   }
-
-  await writeFile(DATA, JSON.stringify(papers, null, 2) + '\n');
   console.log(`\nclassified ${done} papers. ${review} answers need your review.`);
   if (inputTokens) {
     // $0.042 per million input tokens, output free.
@@ -226,7 +273,9 @@ async function main() {
   }
 }
 
-main().catch((e) => {
+// Top-level await so `await import(...)` in the tests waits for the run to
+// finish, rather than racing it with a fixed sleep.
+await main().catch((e) => {
   console.error('classify failed:', e.message);
-  process.exit(1);
+  process.exitCode = 1;
 });

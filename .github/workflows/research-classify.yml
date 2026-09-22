@@ -27,7 +27,7 @@ jobs:
 
       # The corpus is gitignored, so it is rebuilt here rather than stored.
       - name: Fetch corpus
-        run: node research/fetch-arxiv.mjs --max "${{ inputs.fetch_max }}"
+        run: node research/fetch-arxiv.mjs --max "${{ inputs.fetch_max || '50' }}"
 
       - name: Show the payload before spending anything
         run: node research/classify-jev.mjs --dry-run
@@ -36,7 +36,7 @@ jobs:
         env:
           JEV_API_KEY: ${{ secrets.JEV_API_KEY }}
           JEV_ENDPOINT: ${{ vars.JEV_ENDPOINT }}
-        run: node research/classify-jev.mjs --limit "${{ inputs.limit }}"
+        run: node research/classify-jev.mjs --limit "${{ inputs.limit || '10' }}"
 
       - name: What came back
         run: |

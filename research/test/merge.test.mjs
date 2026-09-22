@@ -1,7 +1,7 @@
 /* The re-run behaviour: a second fetch must not duplicate papers, must not
    discard decisions already paid for, and MUST discard them when a paper is
    revised — a new abstract makes the old conclusions stale. */
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
@@ -10,6 +10,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, '..', 'data', 'papers.json');
 
 // Seed a corpus where both papers already carry decisions.
+await mkdir(dirname(DATA), { recursive: true });
 await writeFile(DATA, JSON.stringify([
   { arxiv_id: '2606.05608', version: 1, published: '2026-06-04', title: 'Agentic Software',
     decisions: { is_relevant: 0.97 } },
@@ -25,8 +26,7 @@ globalThis.fetch = async () => {
 };
 
 process.argv = [process.argv[0], 'fetch-arxiv.mjs', '--max', '100'];
-await import('../fetch-arxiv.mjs');
-await new Promise((r) => setTimeout(r, 300));
+await import('../fetch-arxiv.mjs');  // top-level await inside: completes before returning
 
 const papers = JSON.parse(await readFile(DATA, 'utf8'));
 assert.equal(papers.length, 2, 'no duplicates on re-run');

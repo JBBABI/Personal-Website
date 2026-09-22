@@ -121,17 +121,45 @@ async function fetchPage(start, max) {
 }
 
 async function loadExisting() {
+  let raw;
   try {
-    return JSON.parse(await readFile(OUT, 'utf8'));
-  } catch {
-    return [];
+    raw = await readFile(OUT, 'utf8');
+  } catch (e) {
+    if (e.code === 'ENOENT') return [];   // first run, nothing to keep
+    throw e;
   }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error('not an array');
+    return parsed;
+  } catch (e) {
+    // Previously this was swallowed: a truncated file read as an empty corpus
+    // and was then overwritten, destroying every decision already paid for.
+    throw new Error(
+      `${OUT} exists but could not be parsed (${e.message}). ` +
+      'Refusing to overwrite it — move it aside if you meant to start over.',
+    );
+  }
+}
+
+/* A missing or non-numeric value silently became NaN, which fetched nothing
+   and still exited 0. */
+function numArg(args, flag, fallback) {
+  const i = args.indexOf(flag);
+  if (i === -1) return fallback;
+  const raw = args[i + 1];
+  const n = Number(raw);
+  if (raw === undefined || raw.startsWith('--') || !Number.isFinite(n) || n <= 0) {
+    console.error(`${flag} needs a positive number, got ${raw === undefined ? 'nothing' : `"${raw}"`}`);
+    process.exit(1);
+  }
+  return n;
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const since = args.includes('--since') ? args[args.indexOf('--since') + 1] : null;
-  const max = args.includes('--max') ? Number(args[args.indexOf('--max') + 1]) : 200;
+  const max = numArg(args, '--max', 200);
 
   const existing = await loadExisting();
   const seen = new Map(existing.map((p) => [p.arxiv_id, p]));
@@ -180,7 +208,8 @@ async function main() {
   }
 }
 
-main().catch((e) => {
+// Top-level await so tests can await the import rather than racing a sleep.
+await main().catch((e) => {
   console.error('fetch failed:', e.message);
-  process.exit(1);
+  process.exitCode = 1;
 });

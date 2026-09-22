@@ -1,6 +1,6 @@
 /* Exercises the classify step against a stubbed Jev: checks the caching rule,
    the threshold bands, and that nothing is re-sent that was already paid for. */
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, '..', 'data', 'papers.json');
 
+await mkdir(dirname(DATA), { recursive: true });
 await writeFile(DATA, JSON.stringify([
   // Nothing classified yet — all three questions due.
   { arxiv_id: '2606.05608', version: 1, published: '2026-06-04',
@@ -55,8 +56,7 @@ globalThis.fetch = async (url, opts) => {
 
 process.env.JEV_API_KEY = 'test-key';
 process.argv = [process.argv[0], 'classify-jev.mjs'];
-await import('../classify-jev.mjs');
-await new Promise((r) => setTimeout(r, 400));
+await import('../classify-jev.mjs');  // top-level await inside: completes before returning
 
 assert.equal(sent.length, 2, 'both papers sent: the second owes answers to the new topics');
 

@@ -22,19 +22,31 @@ const bar = (p) => {
   return '█'.repeat(n) + '·'.repeat(10 - n);
 };
 
-const papers = JSON.parse(await readFile(DATA, 'utf8'))
-  .filter((p) => Object.keys(p.decisions ?? {}).length);
+let all;
+try {
+  all = JSON.parse(await readFile(DATA, 'utf8'));
+} catch (e) {
+  console.log(e.code === 'ENOENT'
+    ? 'No corpus yet. Run: node research/fetch-arxiv.mjs --max 400'
+    : `Could not read ${DATA}: ${e.message}`);
+  process.exit(e.code === 'ENOENT' ? 0 : 1);
+}
+
+const papers = all.filter((p) => Object.keys(p.decisions ?? {}).length);
 
 if (papers.length === 0) {
-  console.log('Nothing classified yet. Run classify-jev.mjs first.');
+  console.log(`${all.length} papers fetched, none classified yet. Run classify-jev.mjs.`);
   process.exit(0);
 }
 
 const needsReview = (p) => Object.values(p.decisions).some((d) => d.verdict === 'review');
 
+/* Filters compose rather than overwrite each other; --all (the default)
+   shows everything. */
 let shown = papers;
-if (args.includes('--review')) shown = papers.filter(needsReview);
-if (args.includes('--relevant')) shown = papers.filter((p) => p.decisions.is_relevant?.verdict === 'yes');
+if (args.includes('--review')) shown = shown.filter(needsReview);
+if (args.includes('--relevant')) shown = shown.filter((p) => p.decisions.is_relevant?.verdict === 'yes');
+if (shown.length === 0) console.log('No papers match those filters.');
 
 const TOPICS = ['security', 'harness', 'memory', 'evaluation', 'tool_use', 'multi_agent'];
 
