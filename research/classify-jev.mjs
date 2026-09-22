@@ -141,6 +141,15 @@ async function main() {
     process.exit(1);
   }
 
+  // Catches the classic copy-paste of an example line. Cheaper to check here
+  // than to spend a round trip discovering it as a 401.
+  if (!dryRun && /\.\.\.|^(your|xxx|placeholder)/i.test(KEY)) {
+    console.error(`JEV_API_KEY looks like a placeholder, not a key: "${KEY}"`);
+    console.error('Paste the real key from the TypeSafe console, or put it in .env and use:');
+    console.error('  node --env-file=.env research/classify-jev.mjs --limit 10');
+    process.exit(1);
+  }
+
   const papers = JSON.parse(await readFile(DATA, 'utf8'));
   const todo = papers.filter((p) => pending(p).length > 0).slice(0, limit);
   console.log(`${todo.length} of ${papers.length} papers need classifying`);
