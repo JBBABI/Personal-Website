@@ -38,6 +38,27 @@ These read as filler and will be rejected:
 Also avoid: exclamation marks, rhetorical questions, and any sentence that
 would work equally well on someone else's site.
 
+## Punctuation
+
+**No em dashes.** Use a full stop, a colon or a comma.
+
+Two reasons, and the first is the one that matters. The em dash is the
+clearest surviving tell of machine-written copy, and a site whose subject
+is agentic AI cannot afford to read as though an agent wrote it. The
+second: the em dash is the one mark that lets two half-thoughts pass as a
+single sentence, which is precisely the pile-up the voice rules above
+rule out. Pick the real punctuation and the sentence gets shorter.
+
+| Weak                                      | Strong                                    |
+| ----------------------------------------- | ----------------------------------------- |
+| I build agents — and I measure them.      | I build agents. I measure them.           |
+| My work in agentic AI — what I build.     | My work in agentic AI: what I build.      |
+| Power Scout — grid analysis for a site.   | Power Scout: grid analysis for a site.    |
+
+This governs **copy**, not code comments, and not the `—` separator in the
+page-title template. In French the colon takes a non-breaking space before
+it (`agentique : ce que`, U+00A0), so check both locales.
+
 ## Specific beats vague
 
 | Weak                          | Strong                                        |
@@ -71,8 +92,10 @@ Three or four lines on current work. Each line:
   the `updated` stamp when you do.
 
 ### `src/i18n/ui.ts` — the frame
-- `hero.role` — two or three words, sits under the name in uppercase mono.
-- `hero.intro` — one or two sentences on why the page is small. Matter of
+- `hero.welcome` — the single word the page opens on, written out by the
+  animated dots beside it. One word. It is a prompt, not a headline, so it
+  does not take the name or a tagline.
+- `hero.intro` — one or two sentences on what the site is for. Matter of
   fact, not apologetic. Do not say "under construction".
 - `meta.title` — the name is enough. Avoid keyword stuffing.
 - `meta.description` — 150–160 characters, written for a human reading a

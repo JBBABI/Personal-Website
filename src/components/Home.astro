@@ -13,11 +13,12 @@ const links = [
 ---
 <div class="wrap page">
   <header class="id">
-    <h1 class="id__name">Jean-Baptiste&nbsp;Bonvarlet</h1>
-    <p class="label id__role">{t('hero.role')}</p>
+    {/* The dots are decoration, not language: hidden from assistive tech so
+        the accessible name stays "Welcome" rather than "Welcome dot dot dot". */}
+    <h1 class="id__name">{t('hero.welcome')}<span class="dots" aria-hidden="true"
+      ><span></span><span></span><span></span></span></h1>
+    <p class="prose intro">{t('hero.intro')}</p>
   </header>
-
-  <p class="prose intro">{t('hero.intro')}</p>
 
   <section class="now" aria-labelledby="now-h">
     <div class="now__head">
@@ -54,13 +55,60 @@ const links = [
   }
 
   /* ---------- identity ---------- */
-  .id__name {
-    font-size: clamp(1.75rem, 1.2rem + 2.2vw, 2.75rem);
-    margin-bottom: var(--s-3);
-  }
-  .id__role { color: var(--text-dim); }
+  .id__name { font-size: var(--t-xl); }
+  .intro { font-size: var(--t-md); margin-top: var(--s-5); }
 
-  .intro { font-size: var(--t-md); margin-top: calc(var(--s-7) * -0.45); }
+  /* ---------- the prompt: a loading indicator ----------
+     Cycles blank -> . -> .. -> ... -> blank, the way a terminal shows it is
+     still working. Each dot has its own keyframes because they all have to
+     clear on the SAME tick at the end of the cycle; staggered delays on one
+     shared keyframe would clear them one by one instead, which reads as a
+     line being erased rather than a loop restarting.
+
+     steps(1, end) means every dot SNAPS on and off with no fade, per the
+     motion rule in BRAND.md. 1.2s is exactly half the live dot's 2.4s pulse,
+     so the two stay harmonic instead of drifting against each other.
+
+     Animating opacity (not display or visibility) keeps all three dots in
+     the layout at all times, so the heading never reflows as they cycle.
+
+     Neutral grey, never amber: amber marks live state only (BRAND.md), and
+     an ellipsis is decoration, not a status lamp. */
+  .dots {
+    display: inline-flex;
+    gap: 0.06em;
+    margin-left: 0.04em;
+    color: var(--text-dim);
+  }
+  .dots span {
+    /* Visible by default so the dots degrade to a plain static ellipsis
+       wherever the animation does not run. */
+    opacity: 1;
+    animation-duration: 1.2s;
+    animation-timing-function: steps(1, end);
+    animation-iteration-count: infinite;
+  }
+  .dots span::before { content: "."; }
+
+  .dots span:nth-child(1) { animation-name: dot1; }
+  .dots span:nth-child(2) { animation-name: dot2; }
+  .dots span:nth-child(3) { animation-name: dot3; }
+
+  @keyframes dot1 { 0% { opacity: 0; } 25%, 100% { opacity: 1; } }
+  @keyframes dot2 { 0% { opacity: 0; } 50%, 100% { opacity: 1; } }
+  @keyframes dot3 { 0% { opacity: 0; } 75%, 100% { opacity: 1; } }
+
+  /* Stated outright rather than leaning on the global reduced-motion reset:
+     that one only clamps duration, which would still leave the dots blinking
+     through a whole cycle on load. A blinking indicator is also exactly what
+     someone setting this preference is asking not to see. */
+  @media (prefers-reduced-motion: reduce) {
+    /* :nth-child(n) is here to match the specificity of the three rules
+       above. Plain `.dots span` loses to them, and animation-name would
+       survive the override: the dots would still cycle, just clamped to
+       0.01ms by the global reset rather than genuinely switched off. */
+    .dots span:nth-child(n) { animation-name: none; opacity: 1; }
+  }
 
   /* ---------- now ---------- */
   .now {
