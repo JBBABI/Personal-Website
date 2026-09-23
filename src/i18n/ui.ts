@@ -20,10 +20,10 @@ export const ui = {
     'research.note': 'Tags are assigned by a classifier, not by hand, and their accuracy has not been measured yet. Treat them as a way to narrow the list, not as fact.',
 
     'meta.title':       'Jean-Baptiste Bonvarlet',
-    'meta.description': 'Jean-Baptiste Bonvarlet. From marketing to AI engineering. I build tools for power and land projects: Power Scout and the R&B Power platform.',
+    'meta.description': 'Jean-Baptiste Bonvarlet. I build AI tools for power and land projects at R&B Power. This site documents my work in agentic AI: what I build and what I learn.',
 
-    'hero.role':  'Marketing & AI tools',
-    'hero.intro': 'I come from marketing. Now I build AI tools for power and land projects at R&B Power.',
+    'hero.welcome': 'Welcome',
+    'hero.intro': 'This site documents my work in agentic AI — what I build, what I learn, and how I tell whether it works.',
 
     'now.label':   'Now',
     'now.updated': 'Updated',
@@ -52,10 +52,10 @@ export const ui = {
     'research.note': "Les étiquettes sont attribuées par un classifieur, pas à la main, et leur exactitude n'a pas encore été mesurée. À utiliser pour restreindre la liste, pas comme un fait.",
 
     'meta.title':       'Jean-Baptiste Bonvarlet',
-    'meta.description': "Jean-Baptiste Bonvarlet. Du marketing à l'ingénierie IA. Je construis des outils pour des projets d'énergie et de foncier : Power Scout, plateforme R&B Power.",
+    'meta.description': "Jean-Baptiste Bonvarlet. Je construis des outils IA pour des projets d'énergie et de foncier chez R&B Power. Ce site documente mon travail en IA agentique.",
 
-    'hero.role':  'Marketing & outils IA',
-    'hero.intro': "Je viens du marketing. Je construis aujourd'hui des outils IA pour des projets d'énergie et de foncier chez R&B Power.",
+    'hero.welcome': 'Bienvenue',
+    'hero.intro': "Ce site documente mon travail en IA agentique — ce que je construis, ce que j'apprends, et comment je sais si ça fonctionne.",
 
     'now.label':   'En ce moment',
     'now.updated': 'Mis à jour',
