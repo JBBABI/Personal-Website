@@ -12,7 +12,7 @@ export const now = {
   en: {
     updated: '2026-09',
     lines: [
-      'Building Power Scout — grid analysis around a land site.',
+      'Building Power Scout: grid analysis around a land site.',
       'Shipping the R&B Power platform and its public site.',
       'Moving from marketing into AI engineering.',
     ],
@@ -20,7 +20,7 @@ export const now = {
   fr: {
     updated: '2026-09',
     lines: [
-      "Je développe Power Scout — analyse du réseau autour d'un terrain.",
+      "Je développe Power Scout : analyse du réseau autour d'un terrain.",
       'Je livre la plateforme R&B Power et son site public.',
       "Je passe du marketing à l'ingénierie IA.",
     ],

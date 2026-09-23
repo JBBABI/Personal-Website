@@ -23,7 +23,7 @@ export const ui = {
     'meta.description': 'Jean-Baptiste Bonvarlet. I build AI tools for power and land projects at R&B Power. This site documents my work in agentic AI: what I build and what I learn.',
 
     'hero.welcome': 'Welcome',
-    'hero.intro': 'This site documents my work in agentic AI — what I build, what I learn, and how I tell whether it works.',
+    'hero.intro': 'This site documents my work in agentic AI: what I build, what I learn, and how I tell whether it works.',
 
     'now.label':   'Now',
     'now.updated': 'Updated',
@@ -55,7 +55,7 @@ export const ui = {
     'meta.description': "Jean-Baptiste Bonvarlet. Je construis des outils IA pour des projets d'énergie et de foncier chez R&B Power. Ce site documente mon travail en IA agentique.",
 
     'hero.welcome': 'Bienvenue',
-    'hero.intro': "Ce site documente mon travail en IA agentique — ce que je construis, ce que j'apprends, et comment je sais si ça fonctionne.",
+    'hero.intro': "Ce site documente mon travail en IA agentique : ce que je construis, ce que j'apprends, et comment je sais si ça fonctionne.",
 
     'now.label':   'En ce moment',
     'now.updated': 'Mis à jour',

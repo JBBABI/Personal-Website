@@ -91,10 +91,20 @@ a site with a French audience.
 - **Shadows: essentially none.** Depth comes from surface steps
   (`--surface-0` → `--surface-1` → `--surface-2`), not from blur.
 - **Motion: 90–140ms**, `cubic-bezier(0.2, 0, 0, 1)`. Things snap, like a
-  relay closing. No bounce, no spring, no ease-in-out. The one exception is
-  the live dot's 2.4s pulse, which is slow on purpose — it reads as a
-  heartbeat, not an animation.
-- **Reduced motion is honoured** globally. Keep it that way.
+  relay closing. No bounce, no spring, no ease-in-out.
+- **Two perpetual animations are exempt, and only two.** The live dot's
+  **2.4s** pulse is slow on purpose — it reads as a heartbeat, not an
+  animation. The home page's **loading dots** run at **1.2s**, deliberately
+  half that, so the two stay harmonic instead of drifting against each
+  other. Both step between states with `steps(1, end)` and never fade:
+  equipment switches, it does not dissolve. A third needs a better reason
+  than either of these had, and a new period must be a whole fraction of
+  2.4s or the page starts to shimmer.
+- **Reduced motion is honoured** globally. Keep it that way. The global
+  reset in `tokens.css` only clamps *duration*, so anything that would
+  still read as movement once clamped — a staggered sequence, a loop that
+  starts blank — must switch itself off explicitly, at a selector specific
+  enough to win. Check the computed `animation-name`, not just the frame.
 
 ## Layout
 
@@ -122,6 +132,9 @@ cyberpunk stock template". All of them are banned:
 - Skill bars, percentage-rated competencies, star ratings
 - Stock photography of circuitry, robots, or glowing brains
 - Emoji in the interface
+- Em dashes in copy. Use a full stop, a colon or a comma. It is the
+  clearest tell of machine-written text, and this site is about agentic
+  AI, so it cannot read as though an agent wrote it. See `COPY.md`.
 
 ---
 

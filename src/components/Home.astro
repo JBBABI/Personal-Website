@@ -58,13 +58,21 @@ const links = [
   .id__name { font-size: var(--t-xl); }
   .intro { font-size: var(--t-md); margin-top: var(--s-5); }
 
-  /* ---------- the prompt: a terminal mid-write ----------
-     Three dots written one at a time, then cleared. Deliberately mechanical:
-     steps(1, end) means each dot SNAPS on with no fade, the way a character
-     lands in a terminal. The 2.4s period is borrowed from the live dot's
-     pulse so the page keeps a single rhythm instead of two competing ones.
+  /* ---------- the prompt: a loading indicator ----------
+     Cycles blank -> . -> .. -> ... -> blank, the way a terminal shows it is
+     still working. Each dot has its own keyframes because they all have to
+     clear on the SAME tick at the end of the cycle; staggered delays on one
+     shared keyframe would clear them one by one instead, which reads as a
+     line being erased rather than a loop restarting.
 
-     Neutral grey, never amber — amber marks live state only (BRAND.md), and
+     steps(1, end) means every dot SNAPS on and off with no fade, per the
+     motion rule in BRAND.md. 1.2s is exactly half the live dot's 2.4s pulse,
+     so the two stay harmonic instead of drifting against each other.
+
+     Animating opacity (not display or visibility) keeps all three dots in
+     the layout at all times, so the heading never reflows as they cycle.
+
+     Neutral grey, never amber: amber marks live state only (BRAND.md), and
      an ellipsis is decoration, not a status lamp. */
   .dots {
     display: inline-flex;
@@ -76,27 +84,30 @@ const links = [
     /* Visible by default so the dots degrade to a plain static ellipsis
        wherever the animation does not run. */
     opacity: 1;
-    /* `backwards` matters: without it the 0% keyframe is not applied during
-       animation-delay, so dots 2 and 3 would sit visible for their first
-       0.3s/0.6s and the line would read "..." before it reads ".". */
-    animation: write 2.4s steps(1, end) infinite backwards;
+    animation-duration: 1.2s;
+    animation-timing-function: steps(1, end);
+    animation-iteration-count: infinite;
   }
   .dots span::before { content: "."; }
-  .dots span:nth-child(2) { animation-delay: 0.3s; }
-  .dots span:nth-child(3) { animation-delay: 0.6s; }
 
-  @keyframes write {
-    0%   { opacity: 0; }   /* cleared */
-    12%  { opacity: 1; }   /* this dot lands */
-    75%  { opacity: 1; }   /* line holds, fully written */
-    100% { opacity: 0; }   /* cleared, and again */
-  }
+  .dots span:nth-child(1) { animation-name: dot1; }
+  .dots span:nth-child(2) { animation-name: dot2; }
+  .dots span:nth-child(3) { animation-name: dot3; }
+
+  @keyframes dot1 { 0% { opacity: 0; } 25%, 100% { opacity: 1; } }
+  @keyframes dot2 { 0% { opacity: 0; } 50%, 100% { opacity: 1; } }
+  @keyframes dot3 { 0% { opacity: 0; } 75%, 100% { opacity: 1; } }
 
   /* Stated outright rather than leaning on the global reduced-motion reset:
-     that one only clamps duration, which would leave the staggered delays
-     intact and make the dots pop in out of order. */
+     that one only clamps duration, which would still leave the dots blinking
+     through a whole cycle on load. A blinking indicator is also exactly what
+     someone setting this preference is asking not to see. */
   @media (prefers-reduced-motion: reduce) {
-    .dots span { animation: none; opacity: 1; }
+    /* :nth-child(n) is here to match the specificity of the three rules
+       above. Plain `.dots span` loses to them, and animation-name would
+       survive the override: the dots would still cycle, just clamped to
+       0.01ms by the global reset rather than genuinely switched off. */
+    .dots span:nth-child(n) { animation-name: none; opacity: 1; }
   }
 
   /* ---------- now ---------- */
